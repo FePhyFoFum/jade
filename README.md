@@ -3,10 +3,10 @@ jade
 
 A fork of the PEBLS Jade collection of Java objects for phylogenetics and evolutionary biology
 
-install
+Install
 -----
 
-To install this repository as a maven dependency:
+To access the packages in this repository as a maven dependency:
 
 1. git clone the jade repo locally
 2. cd into the jade directory and run:

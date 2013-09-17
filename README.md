@@ -6,7 +6,7 @@ A fork of the PEBLS Jade Java packages. A collection of Java objects for phyloge
 Install
 -----
 
-To access the packages in this repository as a maven dependency:
+To access the packages in this repository as a local maven repository:
 
 1. git clone the jade repo locally
 2. cd into the jade directory and run:

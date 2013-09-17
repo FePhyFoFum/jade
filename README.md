@@ -1,7 +1,7 @@
 jade
 ====
 
-A fork of the PEBLS Jade collection of Java objects for phylogenetics and evolutionary biology
+A fork of the PEBLS Jade Java packages. A collection of Java objects for phylogenetics and evolutionary biology.
 
 Install
 -----

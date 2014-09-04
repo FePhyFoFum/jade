@@ -1,10 +1,15 @@
 package jade.tree;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Stack;
+
 
 public class JadeNode {
     
-    public static final double MIN_BRANCHLENGTH = 0.0000000000000000000001;
+    public static final double MIN_BRANCH_LENGTH = 0.0000000000000000000001;
 
     /*
 	 * common associations
@@ -173,7 +178,7 @@ public class JadeNode {
 			if (bl) {
 			    double branchLength = this.getChild(i).getBL();
 			    if (branchLength == 0)
-			        branchLength = MIN_BRANCHLENGTH;
+			        branchLength = MIN_BRANCH_LENGTH;
 
 			    ret.append(":".concat(String.valueOf(branchLength)));
 			}

@@ -6,7 +6,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
 
-
 public class JadeNode {
     
     public static final double MIN_BRANCH_LENGTH = 0.0000000000000000000001;

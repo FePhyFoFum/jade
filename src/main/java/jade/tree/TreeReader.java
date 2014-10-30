@@ -14,13 +14,12 @@ public class TreeReader {
 	public TreeReader() {
 	}
 
-	public JadeTree readTree(String treeString) {
+	public JadeTree readTree(String treeString) throws TreeParsingError {
 		JadeTree tree = new JadeTree();
 		String pb = treeString;
 
 		if (pb.charAt(pb.length() - 1) != ';') {
-			System.out.println("Tree is invalid: missing concluding semicolon. Exiting.");
-			System.exit(1);
+			throw new TreeParsingError("Tree is invalid: missing concluding semicolon. Exiting.");
 		}
 
 		int x = 0;

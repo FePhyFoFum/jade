@@ -8,13 +8,10 @@ package jade.tree;
  * 
  */
 public class TreeReader {
-	/*
-	 * constructor
-	 */
-	public TreeReader() {
-	}
 
-	public JadeTree readTree(String treeString) throws TreeParsingError {
+	public TreeReader() {}
+
+	public static JadeTree readTree(String treeString) throws TreeParsingError {
 		JadeTree tree = new JadeTree();
 		String pb = treeString;
 
@@ -134,7 +131,7 @@ public class TreeReader {
 			nextChar = pb.charAt(x);
 			// System.out.println(nextChar);
 		}
-		tree.processRoot();
+		tree.update();
 		return tree;
 	}
 }

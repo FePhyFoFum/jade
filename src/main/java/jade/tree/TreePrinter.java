@@ -35,10 +35,10 @@ public class TreePrinter {
 
 	// Print picture of current tree in ASCII
 	private void printASCII(JadeTree tree, PrintWriter out) {
-		tree.processRoot();
+		tree.update();
 
-		numExternalNodes = tree.getExternalNodeCount();
-		numInternalNodes = tree.getInternalNodeCount();
+		numExternalNodes = tree.externalNodes.size();
+		numInternalNodes = tree.internalNodes.size();
 		numBranches = numInternalNodes + numExternalNodes - 1;
 
 		umbrella = new boolean[numExternalNodes];

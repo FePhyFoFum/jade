@@ -8,7 +8,7 @@ import java.util.Stack;
 
 public class JadeNode {
     
-    public static final double MIN_BRANCH_LENGTH = 0.0000000000000000000001;
+    public static final double MIN_BRANCH_LENGTH = 0.000000001;
 
     /*
 	 * common associations
@@ -18,6 +18,7 @@ public class JadeNode {
 	private double distance_from_tip; // distance from the root to a tip (not set automatically)
 	//private int number;
 	private String name;
+//	private Object id;
 	private JadeNode parent;
 	private ArrayList<JadeNode> children;
 //	private ArrayList<NodeObject> assoc; // @note might need to make this a HashMap<String, Object> or TreeMap<String,Object>
@@ -50,7 +51,7 @@ public class JadeNode {
 		this.distance_to_tip = 0.0;
 		this.distance_from_tip = 0.0;
 		//this.number = 0;
-		this.name = "";
+//		this.name = "";
 		this.parent = null;
 		this.children = new ArrayList<JadeNode> ();
 //		this.assoc = new ArrayList<NodeObject>();
@@ -58,8 +59,6 @@ public class JadeNode {
 	}
 	
     // ===== node iterators
-
-    public enum NodeOrder {PREORDER, POSTORDER};
 
     private void addDescendants(JadeNode n, List<JadeNode> children, NodeOrder order) {
 
@@ -122,10 +121,8 @@ public class JadeNode {
 	public boolean hasParent() {return (this.parent != null);}
 	
 	public void setParent(JadeNode p) {this.parent = p;}
-	
-	//public int getNumber() {return this.number;}
-	
-	//public void setNumber(int n) {this.number = n;}
+		
+	public Object getIdentifier() { return name; }
 	
 	public double getBL() {return this.BL;}
 	

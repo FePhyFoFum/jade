@@ -130,6 +130,11 @@ public class JadeNode {
 	
 	public boolean hasChild(JadeNode test) {return this.children.contains(test);}
 	
+	@Override
+	public String toString() {
+		return this.getNewick(false);
+	}
+	
 	public boolean addChild(JadeNode c) {
 		if (this.hasChild(c) == false) {
 			this.children.add(c);

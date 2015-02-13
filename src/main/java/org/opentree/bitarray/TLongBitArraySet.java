@@ -22,7 +22,7 @@ public class TLongBitArraySet implements Iterable<Long> {
 	BitSet bs;
 	
 	// ==== constructors
-	
+		
 	public TLongBitArraySet(Iterable<Long> longArr) {
 		tl = new TLongArrayList();
 		bs = new BitSet();
@@ -208,7 +208,15 @@ public class TLongBitArraySet implements Iterable<Long> {
 	}
 	
 	// == removal methods
-	
+
+	/** 
+	 * Remove all values from this TLongBitArraySet
+	 */
+	public void clear() {
+		tl = new TLongArrayList();
+		bs = new BitSet();
+	}
+
 	/**
 	 * Remove the value from the array. If this is the last instance of this value in the array, it will alsoe be removed from
 	 * the bitset. When removing multiple values, the use of removeAll() is preferred, as it only requires a single update to

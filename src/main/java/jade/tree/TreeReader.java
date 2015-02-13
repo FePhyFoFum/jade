@@ -11,12 +11,12 @@ public class TreeReader {
 
 	public TreeReader() {}
 
-	public static JadeTree readTree(String treeString) throws TreeParsingError {
+	public static JadeTree readTree(String treeString) throws TreeParseException {
 		JadeTree tree = new JadeTree();
 		String pb = treeString;
 
 		if (pb.charAt(pb.length() - 1) != ';') {
-			throw new TreeParsingError("Tree is invalid: missing concluding semicolon. Exiting.");
+			throw new TreeParseException("Tree is invalid: missing concluding semicolon. Exiting.");
 		}
 
 		int x = 0;

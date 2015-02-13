@@ -1,6 +1,6 @@
 package jade.tree;
 
-public class TreeParsingError extends Exception {
+public class TreeParseException extends Exception {
     
 	/**
 	 * 
@@ -9,7 +9,7 @@ public class TreeParsingError extends Exception {
 	
 	String message = "";
 	
-	public TreeParsingError (String message) {
+	public TreeParseException (String message) {
         super();
         this.message = message;
     }

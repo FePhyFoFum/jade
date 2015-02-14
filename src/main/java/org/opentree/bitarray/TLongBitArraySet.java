@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Random;
 
@@ -437,6 +438,9 @@ public class TLongBitArraySet implements Iterable<Long> {
 	
 	@Override
 	public String toString() {
+		if (tl.size() < 1) {
+			return "[]";
+		}
 		StringBuffer s = new StringBuffer();
 		s.append("["+tl.get(0));
 		for (int i = 1; i < tl.size(); i++) {
@@ -446,7 +450,21 @@ public class TLongBitArraySet implements Iterable<Long> {
 		s.append("]");
 		return s.toString();
 	}
-	
+
+	public String toString(Map<Long, String> names) {
+		if (tl.size() < 1) {
+			return "[]";
+		}
+		StringBuffer s = new StringBuffer();
+		s.append("["+names.get(tl.get(0)));
+		for (int i = 1; i < tl.size(); i++) {
+			s.append(",");
+			s.append(names.get(tl.get(i)));
+		}
+		s.append("]");
+		return s.toString();
+	}
+
 	// ==== internal methods
 	
 	/**

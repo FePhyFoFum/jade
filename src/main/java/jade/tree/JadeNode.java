@@ -141,18 +141,27 @@ public class JadeNode implements TreeNode {
 		return this.getNewick(false);
 	}
 	
-	public boolean addChild(JadeNode c) {
-		if (this.hasChild(c) == false) {
-			this.children.add(c);
-			c.setParent(this);
+	@Override
+	public boolean addChild(TreeNode c) {
+		if (! (c instanceof JadeNode)) {
+			throw new IllegalArgumentException();
+		}
+		JadeNode child = (JadeNode) c;
+		if (this.hasChild(child) == false) {
+			this.children.add(child);
+			child.setParent(this);
 			return true;
 		} else {
 			return false;
 		}
 	}
 	
-	public boolean removeChild(JadeNode c) {
-		if (this.hasChild(c)) {
+	@Override
+	public boolean removeChild(TreeNode c) {
+		if (! (c instanceof JadeNode)) {
+			throw new IllegalArgumentException();
+		}
+		if (this.hasChild((JadeNode) c)) {
 			this.children.remove(c);
 			return true;
 		} else {

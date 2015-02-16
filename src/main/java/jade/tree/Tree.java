@@ -6,6 +6,7 @@ public interface Tree {
 	Iterable<TreeNode> internalNodes(NodeOrder preorder);
 	Iterable<TreeNode> externalNodes();
 	int internalNodeCount();
+	int externalNodeCount();
 	TreeBipartition getBipartition(TreeNode p);
 
 }

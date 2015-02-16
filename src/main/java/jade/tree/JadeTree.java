@@ -32,8 +32,9 @@ public class JadeTree implements Tree {
 
 	@Override
 	public String toString() {
-		TreePrinter t = new TreePrinter();
-		return t.printNH(this);
+//		TreePrinter t = new TreePrinter();
+//		return t.printNH(this);
+		return root.getNewick(false);
 	}
 
 	/**
@@ -57,6 +58,8 @@ public class JadeTree implements Tree {
 			}
 		}
 	}
+	
+	
 	
 	public Iterable<TreeBipartition> bipartitions() {
 		return new Iterable<TreeBipartition>() {
@@ -99,10 +102,12 @@ public class JadeTree implements Tree {
         };
     }
     
+    @Override
     public int internalNodeCount() {
     	return internalNodes.size();
     }
 
+    @Override
     public int externalNodeCount() {
     	return externalNodes.size();
     }

@@ -12,6 +12,8 @@ public interface TreeNode {
 	Iterable<TreeNode> getDescendantLeaves();
 	int getChildCount();
 	TreeNode getChild(int i);
+	boolean addChild(TreeNode child);
+	boolean removeChild(TreeNode child);
 	List<TreeNode> getChildren();
 	double getBL();
 	String getNewick(boolean showBranchLengths);

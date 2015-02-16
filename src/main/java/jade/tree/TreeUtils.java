@@ -51,14 +51,14 @@ public class TreeUtils {
 	 * Sets the DistanceFromTip for each tip in the tree to be the distance from that tip to the root of the tree
 	 */
 	public static void setDistanceFromTip(JadeTree tree) {
-		for (JadeNode node : tree.externalNodes()) {
+		for (TreeNode node : tree.externalNodes()) {
 			double h = 0.0;
-			JadeNode p = node;
+			JadeNode p = (JadeNode) node;
 			while (p != null) {
 				h += p.getBL();
-				p = p.getParent();
+				p = (JadeNode) p.getParent();
 			}
-			node.setDistanceFromTip(h);
+			((JadeNode)node).setDistanceFromTip(h);
 		}
 	}
 
@@ -70,13 +70,13 @@ public class TreeUtils {
 	 *        value (initializing them to zero would be safer).
 	 */
 	public static void setDistanceToTip(JadeTree tree) {
-		for (JadeNode node : tree.externalNodes()) {
+		for (TreeNode node : tree.externalNodes()) {
 			double h = 0.0;
-			node.setDistanceToTip(h);
+			((JadeNode)node).setDistanceToTip(h);
 			while (node != null) {
 				h += node.getBL();
-				if (node.getDistanceToTip() < h) {
-					node.setDistanceToTip(h);
+				if (((JadeNode)node).getDistanceToTip() < h) {
+					((JadeNode)node).setDistanceToTip(h);
 				}
 				node = node.getParent();
 			}

@@ -8,10 +8,10 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Set;
 
-public class JadeTree {
+public class JadeTree implements Tree {
 	
 	private JadeNode root;
-	private HashMap<String, JadeNode> namedNodes;
+	private HashMap<Object, JadeNode> namedNodes;
 	private HashMap<String, Object> properties;
 	private boolean hasBranchLengths = false;
 	
@@ -40,27 +40,27 @@ public class JadeTree {
 	 * Initializes data members based on current root.
 	 */
 	public void update() {
-		namedNodes = new HashMap<String, JadeNode>();
+		namedNodes = new HashMap<Object, JadeNode>();
 		internalNodes = new LinkedHashSet<JadeNode>();
 		externalNodes = new LinkedHashSet<JadeNode>();
 		if (root == null) { return; }
-		for (JadeNode node : nodes(NodeOrder.PREORDER)) {
-			String name = node.getName();
-			if (! (name == null || name.length() < 1) && namedNodes.containsKey(name)) {
+		for (TreeNode node : nodes(NodeOrder.PREORDER)) {
+			Object name = node.getLabel();
+			if (! (name == null || (name instanceof String && ((String)name).length() < 1)) && namedNodes.containsKey(name)) {
 				throw new IllegalStateException("duplicate node name: " + name);
 			}
-			namedNodes.put(name, node);
+			namedNodes.put(name, (JadeNode) node);
 			if (node.isExternal()) {
-				externalNodes.add(node);
+				externalNodes.add((JadeNode) node);
 			} else {
-				internalNodes.add(node);
+				internalNodes.add((JadeNode) node);
 			}
 		}
 	}
 	
-	public Iterable<JadeBipartition> bipartitions() {
-		return new Iterable<JadeBipartition>() {
-			public Iterator<JadeBipartition> iterator() {
+	public Iterable<TreeBipartition> bipartitions() {
+		return new Iterable<TreeBipartition>() {
+			public Iterator<TreeBipartition> iterator() {
 				return new BipartIterator(JadeTree.this);
 			}
 		};
@@ -69,9 +69,9 @@ public class JadeTree {
 	/**
 	 * @return an iterator over all external nodes
 	 */
-	public Iterable<JadeNode> externalNodes() {
-	    return new Iterable<JadeNode>() {
-            public Iterator<JadeNode> iterator() {
+	public Iterable<TreeNode> externalNodes() {
+	    return new Iterable<TreeNode>() {
+            public Iterator<TreeNode> iterator() {
             	return new TipIterator(root);
             }
 	    };
@@ -80,9 +80,9 @@ public class JadeTree {
 	/**
      * @return an iterator over all internal nodes
      */
-    public Iterable<JadeNode> internalNodes(final NodeOrder order) {
-        return new Iterable<JadeNode>() {
-            public Iterator<JadeNode> iterator() {
+    public Iterable<TreeNode> internalNodes(final NodeOrder order) {
+        return new Iterable<TreeNode>() {
+            public Iterator<TreeNode> iterator() {
                 return new InternalNodeIterator(root, order);
             }
         };
@@ -91,9 +91,9 @@ public class JadeTree {
 	/**
      * @return an iterator over all internal nodes
      */
-    public Iterable<JadeNode> nodes(final NodeOrder order) {
-        return new Iterable<JadeNode>() {
-            public Iterator<JadeNode> iterator() {
+    public Iterable<TreeNode> nodes(final NodeOrder order) {
+        return new Iterable<TreeNode>() {
+            public Iterator<TreeNode> iterator() {
                 return new NodeIterator(root, order);
             }
         };
@@ -111,17 +111,20 @@ public class JadeTree {
     	return externalNodes.size() + internalNodes.size();
     }
 
-    public JadeBipartition getBipartition(JadeNode node) {
+    public TreeBipartition getBipartition(TreeNode node) {
     	if (! internalNodes.contains(node) && ! externalNodes.contains(node)) {
     		throw new IllegalArgumentException("that node doesn't seem to be in the tree");
     	}
-		Set<JadeNode> outgroup = new HashSet<JadeNode>(this.externalNodes);
-		Set<JadeNode> ingroup = new HashSet<JadeNode>();
-		for (JadeNode l : node.getDescendantLeaves()) {
+		Set<TreeNode> outgroup = new HashSet<TreeNode>();
+		for (JadeNode t : externalNodes) {
+			outgroup.add((TreeNode) t);
+		}
+		Set<TreeNode> ingroup = new HashSet<TreeNode>();
+		for (TreeNode l : node.getDescendantLeaves()) {
 			ingroup.add(l);
 			outgroup.remove(l);
 		}
-		return new JadeBipartition(ingroup, outgroup);
+		return new TreeBipartition(ingroup, outgroup);
     }
     
 	public JadeNode getRoot() {return root;}
@@ -194,7 +197,7 @@ public class JadeTree {
 		if (inRoot == this.getRoot()) {
 			System.err.println("you asked to root at the current root");
 		} else {
-			JadeNode tempParent = inRoot.getParent();
+			JadeNode tempParent = (JadeNode) inRoot.getParent();
 			JadeNode newRoot = new JadeNode(tempParent);
 			newRoot.addChild(inRoot);
 			inRoot.setParent(newRoot);
@@ -375,12 +378,12 @@ public class JadeTree {
 			return;
 		}
 		if (node.getParent() != null) {
-			ProcessReRoot(node.getParent());
+			ProcessReRoot((JadeNode) node.getParent());
 		}
 		// Exchange branch label, length et cetera
-		exchangeInfo(node.getParent(), node);
+		exchangeInfo((JadeNode) node.getParent(), node);
 		// Rearrange topology
-		JadeNode parent = node.getParent();
+		JadeNode parent = (JadeNode) node.getParent();
 		node.addChild(parent);
 		parent.removeChild(node);
 		parent.setParent(node);
@@ -419,7 +422,7 @@ public class JadeTree {
 		 * add !node from parent to mparent
 		 */
 		double bl = 0;
-		JadeNode parent = node.getParent();
+		JadeNode parent = (JadeNode) node.getParent();
 		if(parent.getChildCount()==2){
 			JadeNode other = null;
 			for (int i = 0; i < parent.getChildCount(); i++) {
@@ -429,7 +432,7 @@ public class JadeTree {
 			}
 			bl = other.getBL() + parent.getBL();
 			if(parent != this.root){
-				JadeNode mparent = parent.getParent();
+				JadeNode mparent = (JadeNode) parent.getParent();
 				if (mparent != null) {
 					mparent.addChild(other);
 					other.setBL(bl);
@@ -456,10 +459,10 @@ public class JadeTree {
 	 * @returns the MRCA of two nodes in a tree. Returns null if the two nodes
 	 *		do not have a common ancestor
 	 */
-	public static JadeNode getMRCA(JadeNode curn1, JadeNode curn2) {
+	public static TreeNode getMRCA(TreeNode curn1, TreeNode curn2) {
 		//get path to root for first node
-		ArrayList<JadeNode> path1 = new ArrayList<JadeNode>();
-		JadeNode parent = curn1;
+		ArrayList<TreeNode> path1 = new ArrayList<TreeNode>();
+		TreeNode parent = curn1;
 		while (parent != null) {
 			path1.add(parent);
 			parent = parent.getParent();
@@ -484,17 +487,17 @@ public class JadeTree {
 	}
 
 
-	private class TipIterator implements Iterator<JadeNode> {
-		JadeNode next;
+	private class TipIterator implements Iterator<TreeNode> {
+		TreeNode next;
 		NodeIterator nodeIter;
 		public TipIterator (JadeNode root) {
 			nodeIter = new NodeIterator(root, NodeOrder.PREORDER);
 			loadNextTip();
 		}
 		private void loadNextTip() {
-			JadeNode tip = null;
+			TreeNode tip = null;
 			while (nodeIter.hasNext()) {
-				JadeNode n = nodeIter.next();
+				TreeNode n = nodeIter.next();
 				if (n.isExternal()) {
 					tip = n;
 					break;
@@ -507,8 +510,8 @@ public class JadeTree {
 			return next != null;
 		}
 		@Override
-		public JadeNode next() {
-			JadeNode cur = next;
+		public TreeNode next() {
+			TreeNode cur = next;
 			loadNextTip();
 			return cur;
 		}
@@ -518,31 +521,31 @@ public class JadeTree {
 		}
 	}
 	
-	private class InternalNodeIterator implements Iterator<JadeNode> {
-		JadeNode next;
+	private class InternalNodeIterator implements Iterator<TreeNode> {
+		TreeNode next;
 		NodeIterator nodeIter;
 		public InternalNodeIterator (JadeNode root, NodeOrder order) {
 			nodeIter = new NodeIterator(root, order);
 			loadNextTip();
 		}
 		private void loadNextTip() {
-			JadeNode tip = null;
+			TreeNode tip = null;
 			while (nodeIter.hasNext()) {
-				JadeNode n = nodeIter.next();
+				TreeNode n = nodeIter.next();
 				if (! n.isExternal()) {
 					tip = n;
 					break;
 				}
 			}
-			next = tip;
+			next = (TreeNode) tip;
 		}
 		@Override
 		public boolean hasNext() {
 			return next != null;
 		}
 		@Override
-		public JadeNode next() {
-			JadeNode cur = next;
+		public TreeNode next() {
+			TreeNode cur = next;
 			loadNextTip();
 			return cur;
 		}
@@ -552,32 +555,32 @@ public class JadeTree {
 		}
 	}
 		
-	private class NodeIterator implements Iterator<JadeNode> {
+	private class NodeIterator implements Iterator<TreeNode> {
 
 		// needs to be tested
 		
-		LinkedList<JadeNode> nodes = new LinkedList<JadeNode>();
+		LinkedList<TreeNode> nodes = new LinkedList<TreeNode>();
 		
 		public NodeIterator(JadeNode root, NodeOrder order) {
 			if (order == NodeOrder.POSTORDER) {
-				postOrderAddToStack(root);
+				postOrderAddToStack((TreeNode) root);
 			} else if (order == NodeOrder.PREORDER) {
-				preOrderAddToStack(root);
+				preOrderAddToStack((TreeNode) root);
 			} else {
 				throw new IllegalArgumentException("no node order specified");
 			}
 		}
 		
-		private void postOrderAddToStack(JadeNode p) {
-			for (JadeNode c : p.getChildren()) {
+		private void postOrderAddToStack(TreeNode p) {
+			for (TreeNode c : p.getChildren()) {
 				postOrderAddToStack(c);
 			}
 			nodes.add(p);
 		}
 
-		private void preOrderAddToStack(JadeNode p) {
+		private void preOrderAddToStack(TreeNode p) {
 			nodes.add(p);
-			for (JadeNode c : p.getChildren()) {
+			for (TreeNode c : p.getChildren()) {
 				preOrderAddToStack(c);
 			}
 		}
@@ -588,8 +591,8 @@ public class JadeTree {
 		}
 
 		@Override
-		public JadeNode next() {
-			return nodes.pop();
+		public TreeNode next() {
+			return (TreeNode) nodes.pop();
 		}
 
 		@Override
@@ -598,15 +601,15 @@ public class JadeTree {
 		}		
 	}
 	
-	private class BipartIterator implements Iterator<JadeBipartition> {
+	private class BipartIterator implements Iterator<TreeBipartition> {
 
 		InternalNodeIterator nodeIter;
 		HashSet<JadeNode> tips = new HashSet<JadeNode>();
 		
 		public BipartIterator(JadeTree tree) {
 			nodeIter = new InternalNodeIterator(tree.getRoot(), NodeOrder.PREORDER);
-			for (JadeNode leaf : tree.externalNodes()) {
-				tips.add(leaf);
+			for (TreeNode leaf : tree.externalNodes()) {
+				tips.add((JadeNode) leaf);
 			}
 		}
 		
@@ -616,18 +619,21 @@ public class JadeTree {
 		}
 
 		@Override
-		public JadeBipartition next() {
-			JadeNode n = nodeIter.next();
+		public TreeBipartition next() {
+			TreeNode n = nodeIter.next();
 			if (n == root) {
 				return next();
 			}
-			Set<JadeNode> outgroup = new HashSet<JadeNode>(tips);
-			Set<JadeNode> ingroup = new HashSet<JadeNode>();
-			for (JadeNode l : n.getDescendantLeaves()) {
+			Set<TreeNode> outgroup = new HashSet<TreeNode>();
+			for (JadeNode t : tips) {
+				outgroup.add((TreeNode) t);
+			}
+			Set<TreeNode> ingroup = new HashSet<TreeNode>();
+			for (TreeNode l : n.getDescendantLeaves()) {
 				ingroup.add(l);
 				outgroup.remove(l);
 			}
-			return new JadeBipartition(ingroup, outgroup);
+			return new TreeBipartition(ingroup, outgroup);
 		}
 
 		@Override

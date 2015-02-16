@@ -11,7 +11,7 @@ public class TreeReader {
 
 	public TreeReader() {}
 
-	public static JadeTree readTree(String treeString) throws TreeParseException {
+	public static Tree readTree(String treeString) throws TreeParseException {
 		JadeTree tree = new JadeTree();
 		String pb = treeString;
 
@@ -37,9 +37,9 @@ public class TreeReader {
 					currNode = newNode;
 				}
 			} else if (nextChar == ',') {
-				currNode = currNode.getParent();
+				currNode = (JadeNode) currNode.getParent();
 			} else if (nextChar == ')') {
-				currNode = currNode.getParent();
+				currNode = (JadeNode) currNode.getParent();
 				x++;
 				nextChar = pb.charAt(x);
 				String nam = "";
@@ -132,6 +132,6 @@ public class TreeReader {
 			// System.out.println(nextChar);
 		}
 		tree.update();
-		return tree;
+		return (Tree) tree;
 	}
 }

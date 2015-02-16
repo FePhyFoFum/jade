@@ -451,7 +451,8 @@ public class TLongBitArraySet implements Iterable<Long> {
 		return s.toString();
 	}
 
-	public String toString(Map<Long, String> names) {
+//	public String toString(Map<Long, String> names) {
+	public String toString(Map<Long, Object> names) {
 		if (tl.size() < 1) {
 			return "[]";
 		}

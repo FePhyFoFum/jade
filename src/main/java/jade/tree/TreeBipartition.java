@@ -2,12 +2,12 @@ package jade.tree;
 
 import java.util.Set;
 
-public class JadeBipartition {
+public class TreeBipartition {
 
-	private final Set<JadeNode> ingroup;
-	private final Set<JadeNode> outgroup;
+	private final Set<TreeNode> ingroup;
+	private final Set<TreeNode> outgroup;
 	
-	public JadeBipartition(Set<JadeNode> ingroup, Set<JadeNode> outgroup) {
+	public TreeBipartition(Set<TreeNode> ingroup, Set<TreeNode> outgroup) {
 		this.ingroup = ingroup;
 		this.outgroup = outgroup;
 	}
@@ -15,8 +15,8 @@ public class JadeBipartition {
 	@Override
 	public boolean equals(Object that) {
 		boolean result = false;
-		if (that instanceof JadeBipartition) {
-			JadeBipartition b = (JadeBipartition) that;
+		if (that instanceof TreeBipartition) {
+			TreeBipartition b = (TreeBipartition) that;
 			result = ingroup.size() == b.ingroup.size() && outgroup.size() == b.outgroup.size() &&
 					 ingroup.containsAll(b.ingroup) && outgroup.containsAll(b.outgroup);
 		}
@@ -27,16 +27,16 @@ public class JadeBipartition {
 	public int hashCode() {
 		// have not tested this hash function for performance. be wary.
 		long h = 0;
-		for (JadeNode p : ingroup) { int x = p.getName().hashCode(); h = (h * (59 + x)) + x; }
-		for (JadeNode p : outgroup) { int x = p.getName().hashCode(); h = (h * (73 + x)) + x; }
+		for (TreeNode p : ingroup) { int x = p.getLabel().hashCode(); h = (h * (59 + x)) + x; }
+		for (TreeNode p : outgroup) { int x = p.getLabel().hashCode(); h = (h * (73 + x)) + x; }
 		return (int) h;
 	}
 	
-	public Iterable<JadeNode> ingroup() {
+	public Iterable<TreeNode> ingroup() {
 		return ingroup;
 	}
 
-	public Iterable<JadeNode> outgroup() {
+	public Iterable<TreeNode> outgroup() {
 		return outgroup;
 	}
 
@@ -45,23 +45,23 @@ public class JadeBipartition {
 		StringBuffer s = new StringBuffer();
 		s.append("{");
 		boolean first = true;
-		for (JadeNode l : ingroup) {
+		for (TreeNode l : ingroup) {
 			if (first) {
 				first = false;
 			} else {
 				s.append(", ");
 			}
-			s.append(l.getName());
+			s.append(l.getLabel());
 		}
 		s.append("} | {");
 		first = true;
-		for (JadeNode l : outgroup) {
+		for (TreeNode l : outgroup) {
 			if (first) {
 				first = false;
 			} else {
 				s.append(", ");
 			}
-			s.append(l.getName());
+			s.append(l.getLabel());
 		}
 		s.append("}");
 		return s.toString();

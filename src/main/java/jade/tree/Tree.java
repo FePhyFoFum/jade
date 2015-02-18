@@ -8,5 +8,6 @@ public interface Tree {
 	int internalNodeCount();
 	int externalNodeCount();
 	TreeBipartition getBipartition(TreeNode p);
+	Iterable<TreeBipartition> bipartitions();
 
 }

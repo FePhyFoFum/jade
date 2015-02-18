@@ -59,8 +59,7 @@ public class JadeTree implements Tree {
 		}
 	}
 	
-	
-	
+	@Override
 	public Iterable<TreeBipartition> bipartitions() {
 		return new Iterable<TreeBipartition>() {
 			public Iterator<TreeBipartition> iterator() {

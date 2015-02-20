@@ -4,6 +4,7 @@ import gnu.trove.list.array.TLongArrayList;
 
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -15,7 +16,7 @@ import java.util.Random;
  * DOES NOT ALLOW DUPLICATES, AND PROVIDES ITERATOR IN SORTED ORDER.
  * @author cody hinchliff
  */
-public class TLongBitArraySet implements Iterable<Long> {
+public class TLongBitArraySet implements Iterable<Long>, Collection<Long> {
 
 	private static boolean testing = false; // set to true when performing unit tests 
 	
@@ -84,9 +85,11 @@ public class TLongBitArraySet implements Iterable<Long> {
 		return tl.getQuick(i);
 	}
 	
-	public long[] toArray() {
+	public Object[] toArray() {
 		if (testing) {testInternalState();}
-		return tl.toArray();
+		Object[] r = new Object[tl.size()];
+		for (int i = 0; i < tl.size(); i++) { r[i] = tl.get(i); }
+		return r;
 	}
 	
 	public void sort() {
@@ -94,15 +97,22 @@ public class TLongBitArraySet implements Iterable<Long> {
 		tl.sort();
 	}
 	
-	public boolean contains(Long l) {
+	public boolean contains(Object o) {
 		if (testing) {testInternalState();}
+		Long l = null;
+		if (o instanceof Long || o instanceof Integer) {
+			l = (Long) o;
+		} else {
+			return false;
+		}
 		return bs.get(l.intValue());
 	}
 
+	/*
 	public boolean contains(int i) {
 		if (testing) {testInternalState();}
 		return bs.get(i);
-	}
+	} */
 	
 	// ==== any operation that changes the underlying TLongArray instance must trigger an update to the BitSet
 
@@ -112,9 +122,11 @@ public class TLongBitArraySet implements Iterable<Long> {
 	 * Adds the value to the array and the bitset. For adding more than one value, the use of addAll() methods is preferred,
 	 * as they are more efficient than using add() on multiple individual values.	 * @param l
 	 */
-	public void add(Long l) {
+	@Override
+	public boolean add(Long l) {
 		int i = l.intValue();
 		add(i);
+		return true;
 	}
 
 	/**
@@ -368,12 +380,48 @@ public class TLongBitArraySet implements Iterable<Long> {
 	
 	/**
 	 * Returns true if and only if this TLongBitArray contains any values from the passed TLongBitArray.
-	 * @param compArr
+	 * This is more efficient than the containsAny(Iterable<Long> x) method because it operates on the
+	 * underlying bitsets directly.
+	 * @param that
 	 * @return
 	 */
-	public boolean containsAny(TLongBitArraySet compArr) {
+	public boolean containsAny(TLongBitArraySet that) {
 		if (testing) {testInternalState();}
-		return this.containsAny(compArr.getBitSet());
+		return this.containsAny(that.getBitSet());
+	}
+
+	/**
+	 * Returns true if and only if this TLongBitArray contains any values from the passed Iterable<Long>.
+	 * @param that
+	 * @return
+	 */
+	public boolean containsAny(Iterable<Long> that) {
+		if (testing) {testInternalState();}
+		boolean result = false;
+		for (Long l : that) {
+			if (this.contains(l)) {
+				result = true;
+				break;
+			}
+		}
+		return result;
+	}
+	
+	/**
+	 * Returns true if and only if this TLongBitArray contains any values from the passed long[].
+	 * @param that
+	 * @return
+	 */
+	public boolean containsAny(long[] that) {
+		if (testing) {testInternalState();}
+		boolean result = false;
+		for (long l : that) {
+			if (this.contains(l)) {
+				result = true;
+				break;
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -1140,5 +1188,40 @@ public class TLongBitArraySet implements Iterable<Long> {
 		}
 
 		return true;
+	}
+
+	@Override
+	public boolean addAll(Collection<? extends Long> arg0) {
+		throw new UnsupportedOperationException(); // implement when necessary
+	}
+
+	@Override
+	public boolean containsAll(Collection<?> arg0) {
+		throw new UnsupportedOperationException(); // implement when necessary
+	}
+
+	@Override
+	public boolean isEmpty() {
+		throw new UnsupportedOperationException(); // implement when necessary
+	}
+
+	@Override
+	public boolean remove(Object arg0) {
+		throw new UnsupportedOperationException(); // implement when necessary
+	}
+
+	@Override
+	public boolean removeAll(Collection<?> arg0) {
+		throw new UnsupportedOperationException(); // implement when necessary
+	}
+
+	@Override
+	public boolean retainAll(Collection<?> arg0) {
+		throw new UnsupportedOperationException(); // implement when necessary
+	}
+
+	@Override
+	public <T> T[] toArray(T[] arg0) {
+		throw new UnsupportedOperationException(); // implement when necessary
 	}
 }

@@ -17,7 +17,7 @@ import java.util.Iterator;
 public class LongBitSet implements Iterable<Long> {
 
 	/** Number of bits allocated to a value in an index */
-    private static final int VALUE_BITS = 16; // 2^VALUE_BITS = how many values per bit set 2^16 = 65536
+    private static final int VALUE_BITS = 15; // 2^VALUE_BITS = how many values per bit set 2^15 = 32768
     /** Mask for extracting values */
     private static final long VALUE_MASK = ( 1 << VALUE_BITS ) - 1;
  
@@ -144,6 +144,13 @@ public class LongBitSet implements Iterable<Long> {
     		c += m_sets.get(highBits).cardinality();
     	}
     	return c;
+    }
+    
+    public int hashCode() {
+        // attempt to be fast
+    	long h = 0;
+    	for (BitSet b : m_sets.valueCollection()) { h ^= b.hashCode() + 79; }
+    	return (int) ((h >> 32) ^ h) + 0x76129834;
     }
     
     public Iterator<Long> iterator() {

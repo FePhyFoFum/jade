@@ -1,9 +1,13 @@
 package org.opentree.bitarray;
 
-import java.util.BitSet;
-import java.util.HashMap;
+//import java.util.BitSet;
+import com.carrotsearch.hppc.BitSet;
+
+import gnu.trove.list.array.TLongArrayList;
+import gnu.trove.map.TLongObjectMap;
+import gnu.trove.map.hash.TLongObjectHashMap;
+
 import java.util.Iterator;
-import java.util.Map;
 
 /**
  * http://java-performance.info/bit-sets/
@@ -23,12 +27,12 @@ public class LongBitSet implements Iterable<Long> {
      * but not too short (otherwise this map will get too big). Update value of {@code VALUE_BITS} for your needs.
      * In most cases it is ok to keep 1M - 64M values in a bit set, so each bit set will occupy 128Kb - 8Mb.
      */
-    private Map<Long, BitSet> m_sets = new HashMap<Long, BitSet>( VALUE_BITS );
+    private TLongObjectMap<BitSet> m_sets = new TLongObjectHashMap<BitSet>( VALUE_BITS );
 
     public LongBitSet() {}
     
     public LongBitSet(LongBitSet b) {
-    	m_sets = new HashMap<Long, BitSet>(b.m_sets);
+    	m_sets = new TLongObjectHashMap<BitSet>(b.m_sets);
     }
     
     /**
@@ -84,7 +88,7 @@ public class LongBitSet implements Iterable<Long> {
     public void set( final long index, final boolean value )
     {
         if ( value )
-            bitSet( index ).set( getPos( index ), value );
+            bitSet( index ).set( getPos( index )); //, value );
         else
         {  //if value shall be cleared, check first if given partition exists
             final BitSet bitSet = m_sets.get( getSetIndex( index ) );
@@ -136,7 +140,7 @@ public class LongBitSet implements Iterable<Long> {
  
     public long cardinality() {
     	long c = 0;
-    	for (Long highBits : m_sets.keySet()) {
+    	for (Long highBits : m_sets.keys()) {
     		c += m_sets.get(highBits).cardinality();
     	}
     	return c;
@@ -145,7 +149,7 @@ public class LongBitSet implements Iterable<Long> {
     public Iterator<Long> iterator() {
     	return new Iterator<Long>() {
 
-    		Long[] highBits = m_sets.keySet().toArray(new Long[0]);
+    		long[] highBits = new TLongArrayList(m_sets.keys()).toArray();
     		int i = 0; // index of highBits value for the bitset B we are currently scanning
     		int j = 0; // index at which to start scanning B for next value
     		long next = getNext();

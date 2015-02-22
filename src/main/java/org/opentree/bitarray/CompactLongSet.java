@@ -1,11 +1,11 @@
 package org.opentree.bitarray;
 
 import gnu.trove.list.array.TLongArrayList;
+import gnu.trove.set.hash.TLongHashSet;
 
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -428,7 +428,7 @@ public class CompactLongSet implements Iterable<Long> {
 		test1 = new CompactLongSet(testTL);
 		System.out.println("The Bitset constructed from the TLongArrayList contains: " + test1);
 		Arrays.sort(arr1); // has to be on because testInternalState calls sort the bitarray
-		HashSet<Long> uniqueInts = new HashSet<Long>();
+		TLongHashSet uniqueInts = new TLongHashSet();
 		for (int k = 0; k < arr1.length; k++) {
 			uniqueInts.add(arr1[k]);
 			if (! test1.contains(arr1[k])) {
@@ -446,7 +446,7 @@ public class CompactLongSet implements Iterable<Long> {
 		System.out.println("The starting Bitset contains " + test2.size() + " values: " + test2);
 		test1 = new CompactLongSet(test2);
 		System.out.println("The Bitset constructed from the starting BitArray contains: " + test1);
-		uniqueInts = new HashSet<Long>();
+		uniqueInts = new TLongHashSet();
 		for (int k = 0; k < arr1.length; k++) {
 			uniqueInts.add(arr1[k]);
 			if (! test1.contains(arr1[k])) {
@@ -468,7 +468,7 @@ public class CompactLongSet implements Iterable<Long> {
 		test1 = new CompactLongSet(testArrLong);
 		System.out.println("The Bitset constructed from the TLongArrayList contains: " + test1);
 		Arrays.sort(testArrLong); // has to be on because testInternalState calls sort the bitarray
-		HashSet<Long> uniqueLongs = new HashSet<Long>();
+		TLongHashSet uniqueLongs = new TLongHashSet();
 		for (int k = 0; k < testArrLong.length; k++) {
 			uniqueLongs.add(testArrLong[k]);
 			if (! test1.contains(testArrLong[k])) {
@@ -490,7 +490,7 @@ public class CompactLongSet implements Iterable<Long> {
 		test1 = new CompactLongSet(testArrLong);
 		System.out.println("The BitArray constructed from the TLongArrayList contains: " + test1);
 		Arrays.sort(testArrLong); // has to be on because testInternalState calls sort the bitarray
-		uniqueLongs = new HashSet<Long>();
+		uniqueLongs = new TLongHashSet();
 		for (int k = 0; k < testArrLong.length; k++) {
 			uniqueLongs.add(testArrLong[k]);
 			if (! test1.contains(testArrLong[k])) {

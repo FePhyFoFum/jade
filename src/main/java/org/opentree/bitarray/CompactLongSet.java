@@ -333,6 +333,11 @@ public class CompactLongSet implements Iterable<Long> {
 
 	// ==== internal methods
 	
+	@Override
+	public int hashCode() {
+		return bs.hashCode();
+	}
+	
 	/**
 	 * Returns an iterator over the values from this TLongBitArray.
 	 */

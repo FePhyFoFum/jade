@@ -333,12 +333,25 @@ public class CompactLongSet implements Iterable<Long> {
 
 	// ==== internal methods
 	
+	@Override
 	public int hashCode() {
 		long h = 1;
 		for (long p : this) { h += 29 * p; }
 		return (int) h;
 	}
-	
+
+	@Override
+	public boolean equals(Object that) {
+		boolean result = false;
+		if (that instanceof CompactLongSet) {
+			CompactLongSet other = (CompactLongSet) that;
+			if (other.size() == this.size() && this.containsAll(other)) {
+				result = true;
+			}
+		}
+		return result;
+	}
+
 	/**
 	 * Returns an iterator over the values from this TLongBitArray.
 	 */

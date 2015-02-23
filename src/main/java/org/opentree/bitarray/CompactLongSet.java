@@ -1,12 +1,16 @@
 package org.opentree.bitarray;
 
+
 import gnu.trove.list.array.TLongArrayList;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Random;
@@ -335,9 +339,10 @@ public class CompactLongSet implements Iterable<Long> {
 	
 	@Override
 	public int hashCode() {
-		long h = 1;
-		for (long p : this) { h += 29 * p; }
-		return (int) h;
+		// could attempt to make the this parallel if we need to
+		long h = 0;
+		for (long p : this) { h ^= 29 * p; }
+		return (int) ((h >>> 32) ^ h);
 	}
 
 	@Override

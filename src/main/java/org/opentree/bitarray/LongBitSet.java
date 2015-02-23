@@ -142,6 +142,79 @@ public class LongBitSet implements Iterable<Long> {
     	return c;
     }
     
+    @Override
+    public boolean equals(Object that) {
+    	boolean result = true;
+    	if (that instanceof LongBitSet) {
+    		LongBitSet other = (LongBitSet) that;
+    		if (this.cardinality() != other.cardinality()) {
+    			result = false;
+    		} else {
+	    		for (long l : other) {
+	    			if (this.get(l) != true) {
+	    				result = false; 
+	    				break; 
+	    			}
+	    		}
+    		}
+    	}
+		return result;
+    }
+    
+    @Override
+    public String toString() {
+		if (cardinality() < 1) {
+			return "{}";
+		}
+    	StringBuilder s = new StringBuilder();
+    	boolean first = true;
+    	s.append("{");
+    	for (long l : this) {
+    		if (first) { first = false;  }
+    		else       { s.append(", "); }
+    		s.append(l);
+    	}
+    	s.append("}");
+    	return s.toString();
+    }
+    
+    public String toString(Map<Long, Object> names) {
+		if (cardinality() < 1) {
+			return "{}";
+		}
+/*		StringBuffer s = new StringBuffer();
+		s.append("{");
+		boolean first = true;
+		for (long l : this) {
+			if (first) {
+				first = false;
+			} else {
+				s.append(", ");
+			}
+			s.append(names.get(l));
+		}
+		s.append("}"); */
+    	StringBuilder s = new StringBuilder();
+    	boolean first = true;
+    	s.append("{");
+    	for (long l : this) {
+    		if (first) { first = false;  }
+    		else       { s.append(", "); }
+    		s.append(names.get(l));
+    	}
+    	s.append("}");
+
+		return s.toString();
+    }
+    
+	@Override
+	public int hashCode() {
+		// could attempt to make the this parallel if it would help
+		int h = 1;
+		for (long p : this) { h *= (29 + ((p >>> 32) ^ p)); }
+		return h;
+	}
+    
     public Iterator<Long> iterator() {
     	return new Iterator<Long>() {
 
@@ -205,4 +278,29 @@ public class LongBitSet implements Iterable<Long> {
             }
         }
     } */
+    
+    public static void main(String[] args) {
+    	
+    	
+    	LongBitSet a = new LongBitSet();
+    	LongBitSet b = new LongBitSet();
+    	
+    	a.set(0, true);
+    	a.set(2, true);
+    	a.set(3, true);
+    	a.set(4, true);
+    	a.set(5L, true);
+    	
+    	b.set(5L, true);
+    	b.set(3, true);
+    	b.set(4, true);
+    	b.set(2, true);
+    	b.set(0, true);
+    	
+    	System.out.println(a);
+    	System.out.println(a.hashCode());
+    	System.out.println(b);
+    	System.out.println(b.hashCode());
+    	System.out.println(a.equals(b));
+    }
 }

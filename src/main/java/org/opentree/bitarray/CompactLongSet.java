@@ -298,7 +298,8 @@ public class CompactLongSet implements Iterable<Long> {
 	
 	@Override
 	public String toString() {
-		if (bs.cardinality() < 1) {
+		return bs.toString();
+/*		if (bs.cardinality() < 1) {
 			return "{}";
 		}
 		StringBuffer s = new StringBuffer();
@@ -313,11 +314,12 @@ public class CompactLongSet implements Iterable<Long> {
 			s.append(l);
 		}
 		s.append("}");
-		return s.toString();
+		return s.toString(); */
 	}
 
 	public String toString(Map<Long, Object> names) {
-		if (bs.cardinality() < 1) {
+		return bs.toString(names);
+/*		if (bs.cardinality() < 1) {
 			return "{}";
 		}
 		StringBuffer s = new StringBuffer();
@@ -332,17 +334,14 @@ public class CompactLongSet implements Iterable<Long> {
 			s.append(names.get(l));
 		}
 		s.append("}");
-		return s.toString();
+		return s.toString(); */
 	}
 
 	// ==== internal methods
 	
 	@Override
 	public int hashCode() {
-		// could attempt to make the this parallel if we need to
-		long h = 0;
-		for (long p : this) { h ^= 29 * p; }
-		return (int) ((h >>> 32) ^ h);
+		return bs.hashCode();
 	}
 
 	@Override

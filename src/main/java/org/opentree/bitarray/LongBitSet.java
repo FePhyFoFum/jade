@@ -1,13 +1,9 @@
 package org.opentree.bitarray;
 
-//import java.util.BitSet;
-import com.carrotsearch.hppc.BitSet;
-
-import gnu.trove.list.array.TLongArrayList;
-import gnu.trove.map.TLongObjectMap;
-import gnu.trove.map.hash.TLongObjectHashMap;
-
+import java.util.BitSet;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * http://java-performance.info/bit-sets/
@@ -17,7 +13,7 @@ import java.util.Iterator;
 public class LongBitSet implements Iterable<Long> {
 
 	/** Number of bits allocated to a value in an index */
-    private static final int VALUE_BITS = 15; // 2^VALUE_BITS = how many values per bit set 2^15 = 32768
+    private static final int VALUE_BITS = 17; // 2^VALUE_BITS = how many values per bit set 2^16 = 65536
     /** Mask for extracting values */
     private static final long VALUE_MASK = ( 1 << VALUE_BITS ) - 1;
  
@@ -27,12 +23,12 @@ public class LongBitSet implements Iterable<Long> {
      * but not too short (otherwise this map will get too big). Update value of {@code VALUE_BITS} for your needs.
      * In most cases it is ok to keep 1M - 64M values in a bit set, so each bit set will occupy 128Kb - 8Mb.
      */
-    private TLongObjectMap<BitSet> m_sets = new TLongObjectHashMap<BitSet>( VALUE_BITS );
+    private Map<Long, BitSet> m_sets = new HashMap<Long, BitSet>( VALUE_BITS );
 
     public LongBitSet() {}
     
     public LongBitSet(LongBitSet b) {
-    	m_sets = new TLongObjectHashMap<BitSet>(b.m_sets);
+    	m_sets = new HashMap<Long, BitSet>(b.m_sets);
     }
     
     /**
@@ -88,7 +84,7 @@ public class LongBitSet implements Iterable<Long> {
     public void set( final long index, final boolean value )
     {
         if ( value )
-            bitSet( index ).set( getPos( index )); //, value );
+            bitSet( index ).set( getPos( index ), value );
         else
         {  //if value shall be cleared, check first if given partition exists
             final BitSet bitSet = m_sets.get( getSetIndex( index ) );
@@ -140,23 +136,16 @@ public class LongBitSet implements Iterable<Long> {
  
     public long cardinality() {
     	long c = 0;
-    	for (Long highBits : m_sets.keys()) {
+    	for (Long highBits : m_sets.keySet()) {
     		c += m_sets.get(highBits).cardinality();
     	}
     	return c;
     }
     
-    public int hashCode() {
-        // attempt to be fast
-    	long h = 0;
-    	for (BitSet b : m_sets.valueCollection()) { h ^= b.hashCode() + 79; }
-    	return (int) ((h >> 32) ^ h) + 0x76129834;
-    }
-    
     public Iterator<Long> iterator() {
     	return new Iterator<Long>() {
 
-    		long[] highBits = new TLongArrayList(m_sets.keys()).toArray();
+    		Long[] highBits = m_sets.keySet().toArray(new Long[0]);
     		int i = 0; // index of highBits value for the bitset B we are currently scanning
     		int j = 0; // index at which to start scanning B for next value
     		long next = getNext();

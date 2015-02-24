@@ -346,15 +346,12 @@ public class CompactLongSet implements Iterable<Long> {
 
 	@Override
 	public boolean equals(Object that) {
-		return bs.equals(that);
-/*		boolean result = false;
+		boolean result = false;
 		if (that instanceof CompactLongSet) {
 			CompactLongSet other = (CompactLongSet) that;
-			if (other.size() == this.size() && this.containsAll(other)) {
-				result = true;
-			}
+			result = bs.equals(other.bs);
 		}
-		return result; */
+		return result;
 	}
 
 	/**

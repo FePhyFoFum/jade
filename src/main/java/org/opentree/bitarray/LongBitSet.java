@@ -144,16 +144,14 @@ public class LongBitSet implements Iterable<Long> {
     
     @Override
     public boolean equals(Object that) {
-    	boolean result = true;
-    	if (that instanceof LongBitSet) {
-    		LongBitSet other = (LongBitSet) that;
-    		if (this.cardinality() != other.cardinality()) {
-    			result = false;
-    		} else {
-	    		for (long l : other) {
-	    			if (this.get(l) != true) {
+    	boolean result = false;
+    	if (that != null && that instanceof LongBitSet) {
+    		LongBitSet b = (LongBitSet) that;
+    		if (this.cardinality() == b.cardinality()) {
+        		result = true;
+	    		for (long l : b) {
+	    			if (this.get(l) == false) {
 	    				result = false; 
-	    				break; 
 	    			}
 	    		}
     		}

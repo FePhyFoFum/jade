@@ -1,66 +1,100 @@
 package org.opentree.bitarray;
 
-
 import gnu.trove.list.array.TLongArrayList;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Random;
 
 /**
- * A relatively fast and memory efficient set implementation for long
- * integer values (which is underlain by a LongBitSet implementation).
+ * A relatively fast and memory efficient set implementation for long integer values (which is underlain
+ * by a LongBitSet implementation).
+ * 
+ * This immutable implementation has theta(1) performance for hashCode but does not allow the addition/removal
+ * of values (except for the addition of all values at the time of construction). The mutable implementation
+ * MutableCompactLongSet extends this class to allow the addition/removal of values, but has theta(N) performance
+ * for every call to hashCode()--which is called on every attempt to check if this object is contained in a HashMap
+ * or HashSet. 
  * 
  * @author cody hinchliff
  */
-public class CompactLongSet implements Iterable<Long> {
+public class ImmutableCompactLongSet implements LongSet {
 
 	LongBitSet bs;
+	final int hashCode;
 	
 	// ==== constructors
 		
-	public CompactLongSet(Iterable<Long> longArr) {
+	public ImmutableCompactLongSet(Iterable<Long> longArr) {
 		bs = new LongBitSet();
-		this.addAll(longArr);
-	}
-
-	public CompactLongSet(int[] intArr) {
-		bs = new LongBitSet();
-		this.addAll(intArr);
+		for (Long l : longArr) { add(l); }
+		hashCode = computeHash();
 	}
 	
-	public CompactLongSet(long[] longArr) {
+	public ImmutableCompactLongSet(int[] intArr) {
 		bs = new LongBitSet();
-		this.addAll(longArr);
-	}
-
-	public CompactLongSet(TLongArrayList tLongArr) {
-		bs = new LongBitSet();
-		this.addAll(tLongArr);
+		for (int i : intArr) { add((long) i); }
+		hashCode = computeHash();
 	}
 	
-	public CompactLongSet(LongBitSet bs) {
-		this.bs = new LongBitSet(bs);
-	}
-	
-	public CompactLongSet() {
+	public ImmutableCompactLongSet(long[] longArr) {
 		bs = new LongBitSet();
+		for (long l : longArr) { add(l); }
+		hashCode = computeHash();
 	}
 
+	public ImmutableCompactLongSet(TLongArrayList tLongArr) {
+		bs = new LongBitSet();
+		for (int i = 0; i < tLongArr.size(); i++) { add(tLongArr.get(i)); }
+		hashCode = computeHash();
+	}
+	
+	public ImmutableCompactLongSet(LongBitSet bs) {
+		this.bs = new LongBitSet(bs); // deep copy
+		hashCode = computeHash();
+	}
+
+	public ImmutableCompactLongSet(BitSet toAdd) {
+		this.bs = new LongBitSet();
+		for (int i = toAdd.nextSetBit(0); i >= 0; i = toAdd.nextSetBit(i+1)) { add((long) i); }
+		hashCode = computeHash();
+	}
+
+	public ImmutableCompactLongSet() {
+		bs = new LongBitSet();
+		hashCode = computeHash();
+	}
+
+	/**
+	 * Private method only used internally during construction. Afterward, no values can be added or removed.
+	 */
+	private void add(long l) {
+		this.bs.set(l, true);
+	}
+	
+	/**
+	 * Private method only used internally during construction. Afterward, no values can be added or removes, so the
+	 * hash code should never change, thus we just store it on construction and thereafter return the stored value.
+	 * @return
+	 */
+	private int computeHash() {
+		return bs.hashCode();
+	}
+	
 	// ==== basic functions
 	
+	/**
+	 * Returns a deep copy of the underlying LongBitSet object.
+	 */
 	public LongBitSet getBitSet() {
-		return bs;
+		return new LongBitSet(bs);
 	}
-	
+
 	public long size() {
 		return bs.cardinality();
 	}
@@ -73,166 +107,15 @@ public class CompactLongSet implements Iterable<Long> {
 		return bs.get(i);
 	}
 	
-	// == addition methods
-	
-	/**
-	 * Adds the value to the bitset.
-	 */
-	public void add(Long l) {
-		bs.set(l, true);
-	}
-
-	/**
-	 * Adds the value to the bitset.
-	 * @param l
-	 */
-	public void add(int i) {
-		bs.set((long) i, true);
-	}
-
-	/**
-	 * Add all the values to the bitset.
-	 * @param toAdd
-	 */
-	public void addAll(int[] toAdd) {
-		for (int i : toAdd) {
-			add((long) i);
-		}
-	}
-	
-	/**
-	 * Add all the values to the bitset.
-	 * @param toAdd
-	 */
-	public void addAll(long[] toAdd) {
-		for (long l : toAdd) {
-			add(l);
-		}
-	}
-	
-	/**
-	 * Add all the values to the bitset.
-	 * @param toAdd
-	 */
-	public void addAll(Iterable<Long> toAdd) {
-		for (Long l : toAdd) {
-			add(l);
-		}
-	}
-	
-	/**
-	 * Add all the values to the bitset.
-	 * @param toAdd
-	 */
-	public void addAll(BitSet toAdd) {
-		for (int i = toAdd.nextSetBit(0); i >= 0; i = toAdd.nextSetBit(i+1)) {
-			add((long) i);
-		}
-	}
-
-	/**
-	 * Add all the values to the bitset.
-	 * @param toAdd
-	 */
-	public void addAll(TLongArrayList toAdd) {
-		for (int i = 0; i < toAdd.size(); i++) {
-			add(toAdd.get(i));
-		}
-	}
-
-	/**
-	 * Add all the values to the bitset.
-	 * @param toAdd
-	 */
-	public void addAll(CompactLongSet toAdd) {
-		this.addAll((Iterable<Long>) toAdd); // use the iterator method
-	}
-	
-	// == removal methods
-
-	/** 
-	 * Remove all values from this bitset.
-	 */
-	public void clear() {
-		bs = new LongBitSet();
-	}
-
-	/**
-	 * Remove the value from the bitset.
-	 * @param l
-	 */
-	public void remove(Long l) {
-		bs.set(l, false);
-	}
-	
-	/**
-	 * Remove all the values in the passed array from the bitset.
-	 * @param toRemove
-	 */
-	public void removeAll(int[] toRemove) {
-		for (int i : toRemove) {
-			remove((long) i);
-		}
-	}
-	
-	/**
-	 * Remove all the values in the passed array from the bitset.
-	 * @param toRemove
-	 */
-	public void removeAll(long[] toRemove) {
-		for (long l : toRemove) {
-			remove(l);
-		}
-	}
-	
-	/**
-	 * Remove all the values in the passed iterable from the bitset.
-	 * @param toRemove
-	 */
-	public void removeAll(Iterable<Long> toRemove) {
-		for (Long l : toRemove) {
-			remove(l);
-		}
-	}
-
-	/**
-	 * Remove all the values in the incoming bitset from the bitset.
-	 * @param toRemove
-	 */
-	public void removeAll(BitSet toRemove) {
-		for (int i = toRemove.nextSetBit(0); i >= 0; i = toRemove.nextSetBit(i+1)) {
-			remove((long) i);
-		}
-	}
-	
-	/**
-	 * Remove all the values in the arraylist from the bitset.
-	 * @param toRemove
-	 */
-	public void removeAll(TLongArrayList toRemove) {
-		for (int i = 0; i < toRemove.size(); i++) {
-			remove(toRemove.get(i));
-		}
-	}
-
-	/**
-	 * Remove all the values in the incoming bitset from this bitset.
-	 * 
-	 * @param toRemove
-	 */
-	public void removeAll(CompactLongSet toRemove) {
-		this.removeAll((Iterable<Long>) toRemove); // use the iterator method
-	}
-	
 	// ==== boolean / bitwise operations
 
 	/**
 	 * Perfoms a binary andNot on the internal BitSet against the passed BitSet and returns a new biset containing the result.
-	 * Does not modify the internal or the passed BitSet.
+	 * Does not modify the internal or the passed BitSet. Does not guarantee the specific return type--it could be immutable or not.
 	 * @param that
 	 * @return
 	 */
-	public CompactLongSet andNot(CompactLongSet that) {
+	public LongSet andNot(LongSet that) {
 		throw new UnsupportedOperationException(); // do not need this yet. implement when necessary.
 	}
 		
@@ -249,7 +132,7 @@ public class CompactLongSet implements Iterable<Long> {
 	 * @param that
 	 * @return
 	 */
-	public boolean containsAny(CompactLongSet that) {
+	public boolean containsAny(LongSet that) {
 		boolean result = false;
 		for (long l : that) {
 			if (this.contains(l)) {
@@ -265,7 +148,7 @@ public class CompactLongSet implements Iterable<Long> {
 	 * @param that
 	 * @return
 	 */
-	public boolean containsAll(CompactLongSet that) {
+	public boolean containsAll(LongSet that) {
 		boolean result = true;
 		for (long l : that) {
 			if (! this.contains(l)) {
@@ -278,10 +161,11 @@ public class CompactLongSet implements Iterable<Long> {
 	
 	/**
 	 * Returns a bitset containing the values that are in both this bitset and the passed bitset.
+	 * Does not guarantee the specific return type--it could be immutable or not.
 	 * @param that
 	 * @return
 	 */
-	public CompactLongSet intersection(CompactLongSet that) {
+	public ImmutableCompactLongSet intersection(LongSet that) {
 		throw new UnsupportedOperationException(); // do not need this yet. implement when necessary.
 	}
 	
@@ -299,56 +183,26 @@ public class CompactLongSet implements Iterable<Long> {
 	@Override
 	public String toString() {
 		return bs.toString();
-/*		if (bs.cardinality() < 1) {
-			return "{}";
-		}
-		StringBuffer s = new StringBuffer();
-		s.append("{");
-		boolean first = true;
-		for (long l : this) {
-			if (first) {
-				first = false;
-			} else {
-				s.append(", ");
-			}
-			s.append(l);
-		}
-		s.append("}");
-		return s.toString(); */
 	}
 
 	public String toString(Map<Long, Object> names) {
 		return bs.toString(names);
-/*		if (bs.cardinality() < 1) {
-			return "{}";
-		}
-		StringBuffer s = new StringBuffer();
-		s.append("{");
-		boolean first = true;
-		for (long l : this) {
-			if (first) {
-				first = false;
-			} else {
-				s.append(", ");
-			}
-			s.append(names.get(l));
-		}
-		s.append("}");
-		return s.toString(); */
 	}
-
-	// ==== internal methods
 	
+	/**
+	 * For this (the immutable) implementation of the CompactLongSet, once constructed, no values can be added or removed,
+	 * so we only ever have to compute the hash code once. Thus, this method may just return the stored code and is thus thea(1).
+	 */
 	@Override
 	public int hashCode() {
-		return bs.hashCode();
+		return hashCode;
 	}
 
 	@Override
 	public boolean equals(Object that) {
 		boolean result = false;
-		if (that instanceof CompactLongSet) {
-			CompactLongSet other = (CompactLongSet) that;
+		if (that instanceof LongSet) {
+			ImmutableCompactLongSet other = (ImmutableCompactLongSet) that;
 			result = bs.equals(other.bs);
 		}
 		return result;
@@ -362,15 +216,19 @@ public class CompactLongSet implements Iterable<Long> {
 		return bs.iterator();
 	}
 	
+	public static void main(String[] args) {
+		runUnitTests(args);
+	}
+	
 	/**
 	 * Thorough testing for construction, adding elements, removing elements, and doing bitwise/binary operations.
 	 */
-	public static void main(String[] args) {
+	public static void runUnitTests(String[] args) {
 
 		simpleIterationTest();
 
 		int numTestCycles = 0;
-		if (args.length == 1) {
+		if (args.length > 0) {
 			numTestCycles = Integer.valueOf(args[0]);
 		} else {
 			throw new java.lang.IllegalArgumentException("you must indicate the number of test cycles to perform");
@@ -393,7 +251,7 @@ public class CompactLongSet implements Iterable<Long> {
 	
 	private static boolean simpleIterationTest() {
 		long[] a = new long[] {0, 3, 8, 23, 44, 32768, 65536, 2000000, Long.MAX_VALUE};
-		CompactLongSet b = new CompactLongSet(a);
+		MutableCompactLongSet b = new MutableCompactLongSet(a);
 		
 		for (long l : a) {
 			System.out.println("underlying bs contains " + l + "? " + b.bs.get(l));
@@ -405,7 +263,7 @@ public class CompactLongSet implements Iterable<Long> {
 	}
 	
 	private static boolean runUnitTests(int randSeed) {
-//		long maxVal = Long.MAX_VALUE;
+//			long maxVal = Long.MAX_VALUE;
 		Random r = new Random(randSeed);
 
 		// create a random test arrays of ints
@@ -416,28 +274,8 @@ public class CompactLongSet implements Iterable<Long> {
 		}
 		
 		System.out.println("\nThe first array is: " + Arrays.toString(arr1));
-		
-		// test setting and getting
-		System.out.println("Testing adding and getting");
-		CompactLongSet test1 = new CompactLongSet();
-		for (long k : arr1) {
-			test1.add((long) k);
-		}
-		CompactLongSet test2 = new CompactLongSet();
-		for (long k : arr1) {
-			if (test1.contains(k) == false) {
-				throw new AssertionError("Adding and getting failed. Bitset 1 should have contained " + k + " but it did not");
-			} else {
-				test2.add((long) k);
-			}
-		}
-		test1 = new CompactLongSet(arr1);
-		for (Long l : test2) {
-			if (test1.contains(l) == false) {
-				throw new AssertionError("Adding and getting failed. Bitset 1 should have contained " + l + " but it did not");
-			}
-		}
-		System.out.println("Adding and getting passed\n");
+		LongSet test1;
+		LongSet test2;
 		
 		// instantiating a BitArray from a TLongArrayList
 		System.out.println("Testing BitArray construction from TLongArrayList");
@@ -446,7 +284,7 @@ public class CompactLongSet implements Iterable<Long> {
 			testTL.add(i);
 		}
 		System.out.println("the TLongArrayList contains " + testTL.size() + " values: " + Arrays.toString(testTL.toArray()));
-		test1 = new CompactLongSet(testTL);
+		test1 = new ImmutableCompactLongSet(testTL);
 		System.out.println("The Bitset constructed from the TLongArrayList contains: " + test1);
 		Arrays.sort(arr1); // has to be on because testInternalState calls sort the bitarray
 		HashSet<Long> uniqueInts = new HashSet<Long>();
@@ -463,9 +301,9 @@ public class CompactLongSet implements Iterable<Long> {
 
 		// test instantiating a BitArray from another BitArray
 		System.out.println("Testing FastBitSet construction from another FastBitSet");
-		test2 = new CompactLongSet(arr1);
+		test2 = new ImmutableCompactLongSet(arr1);
 		System.out.println("The starting Bitset contains " + test2.size() + " values: " + test2);
-		test1 = new CompactLongSet(test2);
+		test1 = new ImmutableCompactLongSet(test2);
 		System.out.println("The Bitset constructed from the starting BitArray contains: " + test1);
 		uniqueInts = new HashSet<Long>();
 		for (int k = 0; k < arr1.length; k++) {
@@ -486,7 +324,7 @@ public class CompactLongSet implements Iterable<Long> {
 			testArrLong[k] = Math.abs(r.nextLong());
 		}
 		System.out.println("The long array contains " + testArrLong.length + " values: " + Arrays.toString(testArrLong));
-		test1 = new CompactLongSet(testArrLong);
+		test1 = new ImmutableCompactLongSet(testArrLong);
 		System.out.println("The Bitset constructed from the TLongArrayList contains: " + test1);
 		Arrays.sort(testArrLong); // has to be on because testInternalState calls sort the bitarray
 		HashSet<Long> uniqueLongs = new HashSet<Long>();
@@ -508,7 +346,7 @@ public class CompactLongSet implements Iterable<Long> {
 			testArrLong[k] = Math.abs(r.nextLong());
 		}
 		System.out.println("The int array contains " + testArrLong.length + " values: " + Arrays.toString(testArrLong));
-		test1 = new CompactLongSet(testArrLong);
+		test1 = new ImmutableCompactLongSet(testArrLong);
 		System.out.println("The BitArray constructed from the TLongArrayList contains: " + test1);
 		Arrays.sort(testArrLong); // has to be on because testInternalState calls sort the bitarray
 		uniqueLongs = new HashSet<Long>();
@@ -522,27 +360,6 @@ public class CompactLongSet implements Iterable<Long> {
 			throw new java.lang.AssertionError("Bitset creation from long array failed");
 		}
 		System.out.println("Bitset construction from int array primitive passed\n");
-		
-		// testing BitSet updating
-		System.out.println("Testing removal from the BitArray");
-		System.out.println("Bitset contains: " + test1);
-		System.out.println("Removing values: " + Arrays.toString(testArrLong));
-		test1.removeAll(testArrLong);
-		for (int k = 0; k < testArrLong.length; k++) {
-			if (test1.contains(testArrLong[k])) {
-				throw new java.lang.AssertionError("Bitset removal failed, still contains " + testArrLong[k]);
-			}
-		}
-		if (test1.size() > 0) {
-			System.out.println("Array should be empty, but it still contains: " + test1);
-			throw new java.lang.AssertionError("Bitset removal failed");
-		}
-		if (test1.bs.cardinality() > 0) {
-			throw new AssertionError("Bitset is empty, but its BitSet still contains " + test1.bs.cardinality() + " values");
-		} else {
-			System.out.println("Bitset is empty");
-		}
-		System.out.println("Bitset removal passed\n");
 		
 		/*
 		// creating arrays to test intersection
@@ -630,7 +447,7 @@ public class CompactLongSet implements Iterable<Long> {
 		*/
 		
 		// creating arrays to test contains all
-//		maxVal = 10;
+//			maxVal = 10;
 		n1 = r.nextInt(20);
 		int[] arr3 = new int[n1];
 		for (int i = 0; i < arr3.length; i++) {
@@ -647,8 +464,8 @@ public class CompactLongSet implements Iterable<Long> {
 		for (int i : arr3) { testBS1.set(i-1, true); }
 		BitSet testBS2 = new BitSet();
 		for (int i : arr2) { testBS2.set(i-1, true); }
-		test1 = new CompactLongSet(arr3);
-		test2 = new CompactLongSet(arr2);
+		test1 = new ImmutableCompactLongSet(arr3);
+		test2 = new ImmutableCompactLongSet(arr2);
 		
 		System.out.println("Testing containsAll");
 		System.out.println("BitSet 1 contains: " + test1);
@@ -706,7 +523,7 @@ public class CompactLongSet implements Iterable<Long> {
 		System.out.println("Passed contains all\n");
 		
 		// creating arrays to test containsAny
-//		maxVal = 10;
+//			maxVal = 10;
 		n1 = r.nextInt(1000);
 		arr3 = new int[n1];
 		for (int i = 0; i < arr3.length; i++) {
@@ -731,8 +548,8 @@ public class CompactLongSet implements Iterable<Long> {
 		}
 
 		System.out.println("Testing contains any");
-		test1 = new CompactLongSet(arr3);
-		test2 = new CompactLongSet(arr2);
+		test1 = new ImmutableCompactLongSet(arr3);
+		test2 = new ImmutableCompactLongSet(arr2);
 		System.out.println("BitSet 1 contains: " + test1);
 		System.out.println("BitSet 2 contains: " + test2);
 
@@ -743,7 +560,7 @@ public class CompactLongSet implements Iterable<Long> {
 			System.out.println("FastBitSet 1 contains any of FastBitSet 2? " + containsAny1);
 			if (containsAny1) {
 				System.out.println("yes");
-//				System.out.println("BitArray 1 and BitArray 2 both contain: " + Arrays.toString(test1.getIntersection(test2).toArray()));
+//					System.out.println("BitArray 1 and BitArray 2 both contain: " + Arrays.toString(test1.getIntersection(test2).toArray()));
 			} else {
 				System.out.println("No overlap");
 			}
@@ -769,7 +586,7 @@ public class CompactLongSet implements Iterable<Long> {
 			System.out.println("BitSet 2 contains any of BitSet 1? " + containsAny2);
 			if (containsAny1) {
 				System.out.println("no");
-//				System.out.println("BitArray 1 and BitArray 2 both contain: " + Arrays.toString(test1.getIntersection(test2).toArray()));
+//					System.out.println("BitArray 1 and BitArray 2 both contain: " + Arrays.toString(test1.getIntersection(test2).toArray()));
 			} else {
 				System.out.println("No overlap");
 			}
@@ -795,36 +612,6 @@ public class CompactLongSet implements Iterable<Long> {
 		} else {
 			System.out.println("Passed contains any\n");
 		}
-
-//		maxVal = 20;
-		int maxOps = 10;
-
-		
-		System.out.println("Testing add/remove with duplicate values");
-		
-		int nCycles = r.nextInt(maxOps);
-		int nAdds;
-		int nRemoves;
-		int testVal;
-
-		test1 = new CompactLongSet();
-		System.out.println("BitSet contains " + test1);
-		HashMap<Integer, Integer> expectedCounts = new HashMap<Integer, Integer>();
-		for (int k = 0; k < nCycles; k++) {
-			nAdds = r.nextInt(maxOps);
-			nRemoves = r.nextInt(maxOps);
-			testVal = Math.abs(r.nextInt());
-			System.out.println("Will add the value " + testVal + " to  BitSet " + nAdds + " times, then attempt to remove it " + nRemoves + " times");
-			for (int l = 0; l < nAdds; l++) {
-				test1.add((long) testVal);
-			}
-			test1.remove((long) testVal);
-			System.out.println("BitSet contains " + test1);
-			if (test1.contains(testVal)) {
-				throw new AssertionError("BitSet should not contain testval");
-			}
-		}
-		System.out.println("Passed duplicate values add/remove\n");
 		
 		/*
 		System.out.println("Testing sequential add and remove");

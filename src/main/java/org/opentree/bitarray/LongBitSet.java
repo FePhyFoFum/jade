@@ -4,6 +4,7 @@ import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * http://java-performance.info/bit-sets/
@@ -27,8 +28,18 @@ public class LongBitSet implements Iterable<Long> {
 
     public LongBitSet() {}
     
+    /**
+     * Make a new LongBitSet that is a deep-copy of the passed LongBitSet. Changes to the new BitSet will
+     * not be reflected in the original, and vice-versa.
+     * @param b
+     */
     public LongBitSet(LongBitSet b) {
-    	m_sets = new HashMap<Long, BitSet>(b.m_sets);
+    	m_sets = new HashMap<Long, BitSet>();
+    	for (Entry<Long, BitSet> e : b.m_sets.entrySet()) {
+    		BitSet d = new BitSet();
+    		d.or(e.getValue());
+    		m_sets.put(e.getKey(), d);
+    	}
     }
     
     /**
@@ -278,7 +289,6 @@ public class LongBitSet implements Iterable<Long> {
     } */
     
     public static void main(String[] args) {
-    	
     	
     	LongBitSet a = new LongBitSet();
     	LongBitSet b = new LongBitSet();

@@ -31,20 +31,21 @@ public interface LongSet extends Iterable<Long> {
 		 * @param that
 		 * @return
 		 */
-		public boolean containsAny(LongSet that);
+		public boolean containsAny(Iterable<Long> that);
+		
 		/**
 		 * Returns true if and only if this bitset contains all the values contained in the passed bitset.
 		 * @param that
 		 * @return
 		 */
-		public boolean containsAll(LongSet that);
+		public boolean containsAll(Iterable<Long> that);
 		
 		/**
 		 * Returns a bitset containing the values that are in both this bitset and the passed bitset.
 		 * @param that
 		 * @return
 		 */
-		public LongSet intersection(LongSet that);
+		public LongSet intersection(Iterable<Long> that);
 		
 		public long[] toArray();
 		

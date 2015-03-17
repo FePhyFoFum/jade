@@ -126,13 +126,13 @@ public class ImmutableCompactLongSet implements LongSet {
 	public boolean isEmpty() {
 		return size() == 0;
 	}
-	
+
 	/**
 	 * Returns true if and only if this bitset contains any values from the passed bitset.
 	 * @param that
 	 * @return
 	 */
-	public boolean containsAny(LongSet that) {
+	public boolean containsAny(Iterable<Long> that) {
 		boolean result = false;
 		for (long l : that) {
 			if (this.contains(l)) {
@@ -142,13 +142,13 @@ public class ImmutableCompactLongSet implements LongSet {
 		}
 		return result;
 	}
-
+	
 	/**
 	 * Returns true if and only if this bitset contains all the values contained in the passed bitset.
 	 * @param that
 	 * @return
 	 */
-	public boolean containsAll(LongSet that) {
+	public boolean containsAll(Iterable<Long> that) {
 		boolean result = true;
 		for (long l : that) {
 			if (! this.contains(l)) {
@@ -165,8 +165,14 @@ public class ImmutableCompactLongSet implements LongSet {
 	 * @param that
 	 * @return
 	 */
-	public ImmutableCompactLongSet intersection(LongSet that) {
-		throw new UnsupportedOperationException(); // do not need this yet. implement when necessary.
+	public LongSet intersection(Iterable<Long> that) {
+		MutableCompactLongSet shared = new MutableCompactLongSet();
+		for (long l : that) {
+			if (this.contains(l)) {
+				shared.add(l);
+			}
+		}
+		return shared;
 	}
 	
 	// ==== output methods

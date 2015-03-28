@@ -530,18 +530,18 @@ public class JadeTree implements Tree {
 		NodeIterator nodeIter;
 		public InternalNodeIterator (JadeNode root, NodeOrder order) {
 			nodeIter = new NodeIterator(root, order);
-			loadNextTip();
+			loadNextInternal();
 		}
-		private void loadNextTip() {
-			TreeNode tip = null;
+		private void loadNextInternal() {
+			TreeNode internal = null;
 			while (nodeIter.hasNext()) {
 				TreeNode n = nodeIter.next();
 				if (! n.isExternal()) {
-					tip = n;
+					internal = n;
 					break;
 				}
 			}
-			next = (TreeNode) tip;
+			next = (TreeNode) internal;
 		}
 		@Override
 		public boolean hasNext() {
@@ -550,7 +550,7 @@ public class JadeTree implements Tree {
 		@Override
 		public TreeNode next() {
 			TreeNode cur = next;
-			loadNextTip();
+			loadNextInternal();
 			return cur;
 		}
 		@Override

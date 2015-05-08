@@ -1,158 +1,136 @@
 package jade.tree;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.Set;
 
-public class JadeTree {
-	/*
-	 * private
-	 */
+public class JadeTree implements Tree {
+	
 	private JadeNode root;
-
-	private ArrayList<JadeNode> nodes; // TODO this does not appear to be used (and it is just the union of internalNodes and externalNodes, but it does provide a preorder traversal)
-
-	private ArrayList<JadeNode> internalNodes; // stored in preorder
-
-	private ArrayList<JadeNode> externalNodes;
-
-	private HashMap<String,Object> assoc;
-
-	private int internalNodeCount;  // TODO could be removed by relying on internalNodes.size()
-
-	private int externalNodeCount; // TODO could be removed by relying on externalNodes.size()
-
-	private boolean hasBranchLengths; //false by default
-
-	/*
-	 * constructors
-	 */
+	private HashMap<Object, JadeNode> namedNodes;
+	private HashMap<String, Object> properties;
+	private boolean hasBranchLengths = false;
+	
+	LinkedHashSet<JadeNode> internalNodes;
+	LinkedHashSet<JadeNode> externalNodes;
+	
 	public JadeTree() {
 		root = null;
-		assoc = new HashMap<String,Object>();
-		hasBranchLengths = false;
-		processRoot();
+		properties = new HashMap<String,Object>();
+		update();
 	}
 
 	public JadeTree(JadeNode root) {
 		this.root = root;
-		assoc = new HashMap<String,Object>();
-		hasBranchLengths = false;
-		processRoot();
+		properties = new HashMap<String,Object>();
+		update();
+	}
+
+	@Override
+	public String toString() {
+//		TreePrinter t = new TreePrinter();
+//		return t.printNH(this);
+		return root.getNewick(false);
 	}
 
 	/**
 	 * Initializes data members based on current root.
 	 */
-	public void processRoot() {
-		nodes = new ArrayList<JadeNode>();
-		internalNodes = new ArrayList<JadeNode>();
-		externalNodes = new ArrayList<JadeNode>();
-		internalNodeCount = 0;
-		externalNodeCount = 0;
-		if (root == null) {
-			return;
+	public void update() {
+		namedNodes = new HashMap<Object, JadeNode>();
+		internalNodes = new LinkedHashSet<JadeNode>();
+		externalNodes = new LinkedHashSet<JadeNode>();
+		if (root == null) { return; }
+		for (TreeNode node : nodes(NodeOrder.PREORDER)) {
+			Object name = node.getLabel();
+			if (! (name == null || (name instanceof String && ((String)name).length() < 1)) && namedNodes.containsKey(name)) {
+				throw new IllegalStateException("duplicate node name: " + name);
+			}
+			namedNodes.put(name, (JadeNode) node);
+			if (node.isExternal()) {
+				externalNodes.add((JadeNode) node);
+			} else {
+				internalNodes.add((JadeNode) node);
+			}
 		}
-		postOrderProcessRoot(root);
 	}
-
-	/**
-	 * Adds `tn` to the this.externalNodes, but does not tell the node its number
-	 *	@todo Is this deprecated? it is not used within opentree-treemachine code
-	 */
-	public void addExternalNode(JadeNode tn) {
-		externalNodes.add(tn);
-		externalNodeCount = externalNodes.size();
-		nodes.add(tn);
+	
+	@Override
+	public Iterable<TreeBipartition> bipartitions() {
+		return new Iterable<TreeBipartition>() {
+			public Iterator<TreeBipartition> iterator() {
+				return new BipartIterator(JadeTree.this);
+			}
+		};
 	}
-
-	/**
-	 * Adds `tn` to the this.internalNodeCount, but does not tell the node its number
-	 *	@todo Is this deprecated? it is not used within opentree-machine code
-	 */
-	public void addInternalNode(JadeNode tn) {
-		internalNodes.add(tn);
-		internalNodeCount = internalNodes.size();
-		//to nodes
-		nodes.add(tn);
-	}
-
-	/**
-	 * @return a leaf with the index `num` from the externalNodes or throw IndexOutOfBoundsException.
-	 */
-	public JadeNode getExternalNode(int num) throws IndexOutOfBoundsException {
-		return externalNodes.get(num);
-	}
-
+	
 	/**
 	 * @return an iterator over all external nodes
 	 */
-	public Iterable<JadeNode> iterateExternalNodes() {
-	    return new Iterable<JadeNode>() {
-            public Iterator<JadeNode> iterator() {
-                return externalNodes.iterator();
+	public Iterable<TreeNode> externalNodes() {
+	    return new Iterable<TreeNode>() {
+            public Iterator<TreeNode> iterator() {
+            	return new TipIterator(root);
             }
 	    };
 	}
 
 	/**
-     * @return an iterator over all external nodes
+     * @return an iterator over all internal nodes
      */
-    public Iterable<JadeNode> iterateInternalNodes() {
-        return new Iterable<JadeNode>() {
-            public Iterator<JadeNode> iterator() {
-                return internalNodes.iterator();
+    public Iterable<TreeNode> internalNodes(final NodeOrder order) {
+        return new Iterable<TreeNode>() {
+            public Iterator<TreeNode> iterator() {
+                return new InternalNodeIterator(root, order);
             }
         };
     }
-	
+    
 	/**
-	 * @return a leaf with name `name` or null
-	 * O(N) lookup.
-	 */
-	public JadeNode getExternalNode(String name) {
-		Iterator<JadeNode> go = externalNodes.iterator();
-		while (go.hasNext()) {
-			JadeNode ne = go.next();
-			if (ne.getName().compareTo(name) == 0) {
-				return ne;
-			}
-		}
-		return null;
-	}
+     * @return an iterator over all internal nodes
+     */
+    public Iterable<TreeNode> nodes(final NodeOrder order) {
+        return new Iterable<TreeNode>() {
+            public Iterator<TreeNode> iterator() {
+                return new NodeIterator(root, order);
+            }
+        };
+    }
+    
+    @Override
+    public int internalNodeCount() {
+    	return internalNodes.size();
+    }
 
-	/**
-	 * @return an internal node with the index `num` from the internalNodes or throw IndexOutOfBoundsException.
-	 * Calling this with arguments in the order 0 -> internalNodeCount will be a preorder traversal
-	 */
-	public JadeNode getInternalNode(int num) throws IndexOutOfBoundsException {
-		return internalNodes.get(num);
-	}
+    @Override
+    public int externalNodeCount() {
+    	return externalNodes.size();
+    }
+    
+    public int nodeCount() {
+    	return externalNodes.size() + internalNodes.size();
+    }
 
-	/**
-	 * @return an internal node with name `name` or null
-	 * O(N) lookup.
-	 */
-	public JadeNode getInternalNode(String name) {
-		Iterator<JadeNode> go = internalNodes.iterator();
-		while (go.hasNext()) {
-			JadeNode ne = go.next();
-			if (ne.getName().compareTo(name) == 0) {
-				return ne;
-			}
+    public TreeBipartition getBipartition(TreeNode node) {
+    	if (! internalNodes.contains(node) && ! externalNodes.contains(node)) {
+    		throw new IllegalArgumentException("that node doesn't seem to be in the tree");
+    	}
+		Set<TreeNode> outgroup = new HashSet<TreeNode>();
+		for (JadeNode t : externalNodes) {
+			outgroup.add((TreeNode) t);
 		}
-		return null;
-	}
-	
-	/**
-	 * @return size of externalNodes.
-	 * NOTE: this disagrees with externalNodesCount during tree construction methods!
-	 */
-	public int getExternalNodeCount() {return externalNodes.size();}
-	/**
-	 * @return size of internalNodes.
-	 * NOTE: this disagrees with internalNodesCount during tree construction methods!
-	 */
-	public int getInternalNodeCount() {return internalNodes.size();}
-	
+		Set<TreeNode> ingroup = new HashSet<TreeNode>();
+		for (TreeNode l : node.getDescendantLeaves()) {
+			ingroup.add(l);
+			outgroup.remove(l);
+		}
+		return new TreeBipartition(ingroup, outgroup);
+    }
+    
 	public JadeNode getRoot() {return root;}
 
 	public void setRoot(JadeNode root) {this.root = root;}
@@ -165,16 +143,16 @@ public class JadeTree {
 	 * @param key
 	 * @param obj Object to be stored
 	 */
-	public void assocObject(String key, Object obj) {
-		assoc.put(key, obj);
+	public void setProperty(String key, Object obj) {
+		properties.put(key, obj);
 	}
 
 	/**
 	 * Returns the object associated with the last call of assocObject with this key
 	 * @param key
 	 */
-	public Object getObject(String key) {
-		return assoc.get(key);
+	public Object getProperty(String key) {
+		return properties.get(key);
 	}
 	
 	/**
@@ -182,8 +160,8 @@ public class JadeTree {
 	 * @param key
 	 * @return
 	 */
-	public boolean hasAssocObject(String key) {
-		return assoc.containsKey(key);
+	public boolean hasProperty(String key) {
+		return properties.containsKey(key);
 	}
 	
 	/**
@@ -191,8 +169,8 @@ public class JadeTree {
 	 * @todo need to check
 	 * @todo we should probably have a boolean flag to indicate whether or not the tree should be treated as rooted
 	 */
-	public HashMap<String,Object> getAssoc() {
-		return assoc;
+	public HashMap<String, Object> getProperties() {
+		return properties;
 	}
 	
 	/**
@@ -200,11 +178,11 @@ public class JadeTree {
 	 * @todo we should probably have a boolean flag to indicate whether or not the tree should be treated as rooted
 	 */
 	public void unRoot(JadeNode inRoot) {
-		processRoot();
+		update();
 		if (this.getRoot().getChildCount() < 3) {
 			tritomyRoot(inRoot);
 		}
-		processRoot();
+		update();
 	}
 	
 	/**
@@ -215,7 +193,7 @@ public class JadeTree {
 	 * @todo should probably be renamed to "addRootBelow(JadeNode inRootChild)"
 	 */
 	public void reRoot(JadeNode inRoot) {
-		processRoot();
+		update();
 		if (this.getRoot().getChildCount() < 3) {
 			tritomyRoot(inRoot);
 		}
@@ -223,7 +201,7 @@ public class JadeTree {
 		if (inRoot == this.getRoot()) {
 			System.err.println("you asked to root at the current root");
 		} else {
-			JadeNode tempParent = inRoot.getParent();
+			JadeNode tempParent = (JadeNode) inRoot.getParent();
 			JadeNode newRoot = new JadeNode(tempParent);
 			newRoot.addChild(inRoot);
 			inRoot.setParent(newRoot);
@@ -234,7 +212,7 @@ public class JadeTree {
 			inRoot.setBL(inRoot.getBL() / 2);
 			ProcessReRoot(newRoot);
 			setRoot(newRoot);
-			processRoot();
+			update();
 		}
 	}
 
@@ -301,11 +279,12 @@ public class JadeTree {
 		}
 	}
 
-	/**
+	/* NOT USED BY OPENTREE
+	 * 
 	 * @return the node in the tree that is the most recent common ancestor of all of the leaves specified
 	 * @param innodes an array of leaf node names
 	 * @todo this could be optimized (by not calling getMRCATraverse repeatedly)
-	 */
+	 *
 	public JadeNode getMRCA(String [] innodes) {
 		if (innodes.length == 1)
     		return this.getExternalNode(innodes[0]);
@@ -324,13 +303,14 @@ public class JadeTree {
 			cur1 = tempmrca;
 		}
 		return cur1;
-    }
+    } */
 	
-	/**
+	/* NOT USED BY OPENTREE
+	 * 
 	 * @return the node in the tree that is the most recent common ancestor of all of the leaves specified
 	 * @param innodes an array of leaf node names
 	 * @todo this could be optimized (by not calling getMRCATraverse repeatedly)
-	 */
+	 *
 	public JadeNode getMRCA(ArrayList<String> innodes) {
     	if (innodes.size() == 1) {
     		return this.getExternalNode(innodes.get(0));
@@ -350,16 +330,16 @@ public class JadeTree {
 			cur1 = tempmrca;
 		}
 		return cur1;
-    }
+    } */
 	
-	   /**
+	/*
      * @return the node in the tree that is the most recent common ancestor of all of the leaves specified
      * @param innodes an array of leaf node names
      * @todo this could be optimized (by not calling getMRCATraverse repeatedly)
-     */
+     *
     public JadeNode getMRCAAnyDepthDescendants(ArrayList<String> innodes) {
         if (innodes.size() == 1) {
-            return this.getExternalNode(innodes.get(0));
+            return this.getNodeById(innodes.get(0));
         }
         ArrayList <String> outgroup = new ArrayList<String>();
         for (int i = 0; i < innodes.size(); i++) {
@@ -391,7 +371,7 @@ public class JadeTree {
             cur1 = tempmrca;
         }
         return cur1;
-    }
+    } */
 	
 	/**
 	 * Changes the direction of the arc connecting node to it's parent
@@ -402,12 +382,12 @@ public class JadeTree {
 			return;
 		}
 		if (node.getParent() != null) {
-			ProcessReRoot(node.getParent());
+			ProcessReRoot((JadeNode) node.getParent());
 		}
 		// Exchange branch label, length et cetera
-		exchangeInfo(node.getParent(), node);
+		exchangeInfo((JadeNode) node.getParent(), node);
 		// Rearrange topology
-		JadeNode parent = node.getParent();
+		JadeNode parent = (JadeNode) node.getParent();
 		node.addChild(parent);
 		parent.removeChild(node);
 		parent.setParent(node);
@@ -431,24 +411,6 @@ public class JadeTree {
 	}
 
 	/**
-	 * Adds node and its descendants to the appropriate list (externalNodes or internalNodes)
-	 */
-	private void postOrderProcessRoot(JadeNode node) {
-		if (node == null)
-			return;
-		if (node.getChildCount() > 0) {
-			for (int i = 0; i < node.getChildCount(); i++) {
-				postOrderProcessRoot(node.getChild(i)); //@todo recursion could be a problem for big trees...
-			}
-		}
-		if (node.isExternal()) {
-			addExternalNode(node);
-		} else {
-			addInternalNode(node);
-		}
-	}
-
-	/**
 	 * prunes `node` from the tree, if `node` is external
 	 */
 	public void pruneExternalNode(JadeNode node) {
@@ -464,7 +426,7 @@ public class JadeTree {
 		 * add !node from parent to mparent
 		 */
 		double bl = 0;
-		JadeNode parent = node.getParent();
+		JadeNode parent = (JadeNode) node.getParent();
 		if(parent.getChildCount()==2){
 			JadeNode other = null;
 			for (int i = 0; i < parent.getChildCount(); i++) {
@@ -474,7 +436,7 @@ public class JadeTree {
 			}
 			bl = other.getBL() + parent.getBL();
 			if(parent != this.root){
-				JadeNode mparent = parent.getParent();
+				JadeNode mparent = (JadeNode) parent.getParent();
 				if (mparent != null) {
 					mparent.addChild(other);
 					other.setBL(bl);
@@ -485,27 +447,26 @@ public class JadeTree {
 						}
 					}
 				}
-				this.processRoot();
+				this.update();
 			}else{//parent == root
 				other.setParent(null);
 				this.setRoot(other);
-				this.processRoot();
+				this.update();
 			}
 		}else{
 			parent.removeChild(node);
-			this.processRoot();
+			this.update();
 		}
 	}
 	
-	/*
+	/**
 	 * @returns the MRCA of two nodes in a tree. Returns null if the two nodes
 	 *		do not have a common ancestor
-	 *
 	 */
-	private static JadeNode getMRCATraverse(JadeNode curn1, JadeNode curn2) {
+	public static TreeNode getMRCA(TreeNode curn1, TreeNode curn2) {
 		//get path to root for first node
-		ArrayList<JadeNode> path1 = new ArrayList<JadeNode>();
-		JadeNode parent = curn1;
+		ArrayList<TreeNode> path1 = new ArrayList<TreeNode>();
+		TreeNode parent = curn1;
 		while (parent != null) {
 			path1.add(parent);
 			parent = parent.getParent();
@@ -520,11 +481,169 @@ public class JadeTree {
 		}
 		return null;
 	}
+	
 	public void setHasBranchLengths(boolean v) {
 		hasBranchLengths = v;
 	}
+	
 	public boolean getHasBranchLengths() {
 		return hasBranchLengths;
 	}
+
+
+	private class TipIterator implements Iterator<TreeNode> {
+		TreeNode next;
+		NodeIterator nodeIter;
+		public TipIterator (JadeNode root) {
+			nodeIter = new NodeIterator(root, NodeOrder.PREORDER);
+			loadNextTip();
+		}
+		private void loadNextTip() {
+			TreeNode tip = null;
+			while (nodeIter.hasNext()) {
+				TreeNode n = nodeIter.next();
+				if (n.isExternal()) {
+					tip = n;
+					break;
+				}
+			}
+			next = tip;
+		}
+		@Override
+		public boolean hasNext() {
+			return next != null;
+		}
+		@Override
+		public TreeNode next() {
+			TreeNode cur = next;
+			loadNextTip();
+			return cur;
+		}
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+	}
+	
+	private class InternalNodeIterator implements Iterator<TreeNode> {
+		TreeNode next;
+		NodeIterator nodeIter;
+		public InternalNodeIterator (JadeNode root, NodeOrder order) {
+			nodeIter = new NodeIterator(root, order);
+			loadNextInternal();
+		}
+		private void loadNextInternal() {
+			TreeNode internal = null;
+			while (nodeIter.hasNext()) {
+				TreeNode n = nodeIter.next();
+				if (! n.isExternal()) {
+					internal = n;
+					break;
+				}
+			}
+			next = (TreeNode) internal;
+		}
+		@Override
+		public boolean hasNext() {
+			return next != null;
+		}
+		@Override
+		public TreeNode next() {
+			TreeNode cur = next;
+			loadNextInternal();
+			return cur;
+		}
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+	}
 		
+	private class NodeIterator implements Iterator<TreeNode> {
+
+		// needs to be tested
+		
+		LinkedList<TreeNode> nodes = new LinkedList<TreeNode>();
+		
+		public NodeIterator(JadeNode root, NodeOrder order) {
+			if (order == NodeOrder.POSTORDER) {
+				postOrderAddToStack((TreeNode) root);
+			} else if (order == NodeOrder.PREORDER) {
+				preOrderAddToStack((TreeNode) root);
+			} else {
+				throw new IllegalArgumentException("no node order specified");
+			}
+		}
+		
+		private void postOrderAddToStack(TreeNode p) {
+			for (TreeNode c : p.getChildren()) {
+				postOrderAddToStack(c);
+			}
+			nodes.add(p);
+		}
+
+		private void preOrderAddToStack(TreeNode p) {
+			nodes.add(p);
+			for (TreeNode c : p.getChildren()) {
+				preOrderAddToStack(c);
+			}
+		}
+
+		@Override
+		public boolean hasNext() {
+			return ! nodes.isEmpty();
+		}
+
+		@Override
+		public TreeNode next() {
+			return (TreeNode) nodes.pop();
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}		
+	}
+	
+	private class BipartIterator implements Iterator<TreeBipartition> {
+
+		InternalNodeIterator nodeIter;
+		HashSet<JadeNode> tips = new HashSet<JadeNode>();
+		
+		public BipartIterator(JadeTree tree) {
+			nodeIter = new InternalNodeIterator(tree.getRoot(), NodeOrder.PREORDER);
+			for (TreeNode leaf : tree.externalNodes()) {
+				tips.add((JadeNode) leaf);
+			}
+		}
+		
+		@Override
+		public boolean hasNext() {
+			return nodeIter.hasNext();
+		}
+
+		@Override
+		public TreeBipartition next() {
+			TreeNode n = nodeIter.next();
+			if (n == root) {
+				return next();
+			}
+			Set<TreeNode> outgroup = new HashSet<TreeNode>();
+			for (JadeNode t : tips) {
+				outgroup.add((TreeNode) t);
+			}
+			Set<TreeNode> ingroup = new HashSet<TreeNode>();
+			for (TreeNode l : n.getDescendantLeaves()) {
+				ingroup.add(l);
+				outgroup.remove(l);
+			}
+			return new TreeBipartition(ingroup, outgroup);
+		}
+
+		@Override
+		public void remove() {
+			nodeIter.remove();
+		}
+		
+	}
 }

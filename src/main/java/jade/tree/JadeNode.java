@@ -6,9 +6,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
 
-public class JadeNode {
+public class JadeNode implements TreeNode {
     
-    public static final double MIN_BRANCH_LENGTH = 0.0000000000000000000001;
+    public static final double MIN_BRANCH_LENGTH = 0.000000001;
 
     /*
 	 * common associations
@@ -18,6 +18,7 @@ public class JadeNode {
 	private double distance_from_tip; // distance from the root to a tip (not set automatically)
 	//private int number;
 	private String name;
+//	private Object id;
 	private JadeNode parent;
 	private ArrayList<JadeNode> children;
 //	private ArrayList<NodeObject> assoc; // @note might need to make this a HashMap<String, Object> or TreeMap<String,Object>
@@ -50,7 +51,7 @@ public class JadeNode {
 		this.distance_to_tip = 0.0;
 		this.distance_from_tip = 0.0;
 		//this.number = 0;
-		this.name = "";
+//		this.name = "";
 		this.parent = null;
 		this.children = new ArrayList<JadeNode> ();
 //		this.assoc = new ArrayList<NodeObject>();
@@ -59,12 +60,10 @@ public class JadeNode {
 	
     // ===== node iterators
 
-    public enum NodeOrder {PREORDER, POSTORDER};
-
-    private void addDescendants(JadeNode n, List<JadeNode> children, NodeOrder order) {
+    private void addDescendants(TreeNode n, List<TreeNode> children, NodeOrder order) {
 
         if (order == NodeOrder.PREORDER) {
-            for (JadeNode c : n.children){
+            for (TreeNode c : n.getChildren()){
                 addDescendants(c, children, order);
             }
             children.add(n);
@@ -72,22 +71,22 @@ public class JadeNode {
         } else if (order == NodeOrder.POSTORDER) {
             children.add(n);
 
-            for (JadeNode c : n.children){
+            for (TreeNode c : n.getChildren()){
                 addDescendants(c, children, order);
             }
         }
     }
     
-    public Iterable<JadeNode> getDescendants(NodeOrder order) {
+    public Iterable<TreeNode> getDescendants(NodeOrder order) {
         
-        LinkedList<JadeNode> nodes = new LinkedList<JadeNode>();
-        addDescendants(this, nodes, order);
+        LinkedList<TreeNode> nodes = new LinkedList<TreeNode>();
+        addDescendants((TreeNode) this, nodes, order);
         return nodes;
     }
     
-    public Iterable<JadeNode> getDescendantLeaves(NodeOrder order) {
-        LinkedList<JadeNode> leaves = new LinkedList<JadeNode>();
-    	for (JadeNode descendant : getDescendants(order)) {
+    public Iterable<TreeNode> getDescendantLeaves(NodeOrder order) {
+        LinkedList<TreeNode> leaves = new LinkedList<TreeNode>();
+    	for (TreeNode descendant : getDescendants(order)) {
     		if (descendant.isExternal()) {
     			leaves.add(descendant);
     		}
@@ -95,11 +94,11 @@ public class JadeNode {
     	return leaves;
     }
     
-    public Iterable<JadeNode> getDescendantLeaves() {
+    public Iterable<TreeNode> getDescendantLeaves() {
     	return getDescendantLeaves(NodeOrder.PREORDER);
     }
     
-    public Iterable<JadeNode> getDescendants() {
+    public Iterable<TreeNode> getDescendants() {
     	return getDescendants(NodeOrder.PREORDER);
     }
     
@@ -109,9 +108,15 @@ public class JadeNode {
      * other public methods
      */
     
-	public JadeNode [] getChildrenArr() {return (JadeNode[])this.children.toArray();}
+	public JadeNode [] getChildrenArr() {return (JadeNode[]) this.children.toArray();}
 	
-	public ArrayList<JadeNode> getChildren() {return this.children;}
+	public List<TreeNode> getChildren() {
+		List<TreeNode> chillins = new ArrayList<TreeNode>();
+		for (JadeNode c : this.children) {
+			chillins.add((TreeNode) c);
+		}
+		return chillins;
+	}
 	
 	public boolean isExternal() {return (this.children.size() < 1);}
 	
@@ -122,10 +127,8 @@ public class JadeNode {
 	public boolean hasParent() {return (this.parent != null);}
 	
 	public void setParent(JadeNode p) {this.parent = p;}
-	
-	//public int getNumber() {return this.number;}
-	
-	//public void setNumber(int n) {this.number = n;}
+		
+	public Object getLabel() { return name; }
 	
 	public double getBL() {return this.BL;}
 	
@@ -133,18 +136,32 @@ public class JadeNode {
 	
 	public boolean hasChild(JadeNode test) {return this.children.contains(test);}
 	
-	public boolean addChild(JadeNode c) {
-		if (this.hasChild(c) == false) {
-			this.children.add(c);
-			c.setParent(this);
+	@Override
+	public String toString() {
+		return this.getNewick(false);
+	}
+	
+	@Override
+	public boolean addChild(TreeNode c) {
+		if (! (c instanceof JadeNode)) {
+			throw new IllegalArgumentException();
+		}
+		JadeNode child = (JadeNode) c;
+		if (this.hasChild(child) == false) {
+			this.children.add(child);
+			child.setParent(this);
 			return true;
 		} else {
 			return false;
 		}
 	}
 	
-	public boolean removeChild(JadeNode c) {
-		if (this.hasChild(c)) {
+	@Override
+	public boolean removeChild(TreeNode c) {
+		if (! (c instanceof JadeNode)) {
+			throw new IllegalArgumentException();
+		}
+		if (this.hasChild((JadeNode) c)) {
 			this.children.remove(c);
 			return true;
 		} else {
@@ -161,7 +178,9 @@ public class JadeNode {
 	
 	public void setName(String s) {this.name = s;}
 	
-	public String getName() {return this.name;}
+	@Deprecated
+	/** Deprecated. Use getIdentifier() instead. */
+	public String getName() {return this.name;} 
 	
 	/**
 	 * @param bl should be true to include branch lengths
@@ -260,12 +279,12 @@ public class JadeNode {
 	/**
 	 * @return Returns all of the tips in the subtree rooted at `this`
 	 */
-	public ArrayList<JadeNode> getTips() {
-		ArrayList<JadeNode> children = new ArrayList<JadeNode>();
-		Stack<JadeNode> nodes = new Stack<JadeNode>();
-		nodes.push(this);
+	public ArrayList<TreeNode> getTips() {
+		ArrayList<TreeNode> children = new ArrayList<TreeNode>();
+		Stack<TreeNode> nodes = new Stack<TreeNode>();
+		nodes.push((TreeNode) this);
 		while (nodes.isEmpty() == false) {
-			JadeNode jt = nodes.pop();
+			TreeNode jt = nodes.pop();
 			for (int i = 0; i < jt.getChildCount(); i++) {
 				nodes.push(jt.getChild(i));
 			}
@@ -301,9 +320,9 @@ public class JadeNode {
 	 */
 	public int getNodeMaxDepth() {
 		int maxnodedepth = 0;
-		ArrayList<JadeNode> tips = this.getTips();
+		ArrayList<TreeNode> tips = this.getTips();
 		for (int i = 0; i < tips.size(); i++) {
-			JadeNode curnode = tips.get(i);
+			TreeNode curnode = tips.get(i);
 			int tnodedepth = 0;
 			while (curnode != this) {
 				tnodedepth += 1;
@@ -316,7 +335,7 @@ public class JadeNode {
 		return maxnodedepth;
 	}
 	
-	public JadeNode getParent() {return this.parent;}
+	public TreeNode getParent() {return (TreeNode) this.parent;}
 	
 	public int getChildCount() {return this.children.size();}
 	
@@ -380,6 +399,7 @@ public class JadeNode {
 	 * @param key
 	 * @param obj Object to be stored
 	 */
+	@Deprecated
 	public void assocObject(String key, Object obj) {
 		assoc.put(key, obj);
 	}
@@ -388,6 +408,7 @@ public class JadeNode {
 	 * Returns the object associated with the last call of assocObject with this key
 	 * @param key
 	 */
+	@Deprecated
 	public Object getObject(String key) {
 		return assoc.get(key);
 	}
@@ -397,6 +418,7 @@ public class JadeNode {
 	 * @param key
 	 * @return
 	 */
+	@Deprecated
 	public boolean hasAssocObject(String key) {
 		return assoc.containsKey(key);
 	}
@@ -406,6 +428,7 @@ public class JadeNode {
 	 * @todo need to check
 	 * @todo we should probably have a boolean flag to indicate whether or not the tree should be treated as rooted
 	 */
+	@Deprecated
 	public HashMap<String,Object> getAssoc() {
 		return assoc;
 	}
